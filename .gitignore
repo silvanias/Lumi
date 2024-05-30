@@ -1,0 +1,5 @@
+vcpkg
+build
+.vscode
+.DS_Store
+lib/imgui
