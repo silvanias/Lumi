@@ -1,18 +1,13 @@
 #pragma once
 
 #include <vector>
+#include <glm/glm.hpp>
 
+#include "imgui/imgui.h"
 #include "gui/window/window.h"
 #include "gui/imgui/render/imgui_render.h"
-#include "imgui/imgui.h"
-
-glm::vec3 tracePath(int x, int y, const int &WIDTH, const int &HEIGHT)
-{
-    auto r = float(x) / float(WIDTH);
-    auto g = float(y) / float(HEIGHT);
-    auto b = 0.0f;
-    return glm::vec3(r, g, b);
-}
+#include "shaders/shader.h"
+#include "ray.h"
 
 void updateTexture(unsigned int texture, const std::vector<glm::vec3> &image, const int &WIDTH, const int &HEIGHT)
 {
@@ -26,53 +21,90 @@ void clearFrame(const ImVec4 &clear_color)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+bool hit_sphere(const glm::vec3 &center, double radius, const ray &r)
+{
+    glm::vec3 oc = center - r.origin();
+    auto a = dot(r.direction(), r.direction());
+    auto b = -2.0f * dot(r.direction(), oc);
+    auto c = dot(oc, oc) - radius * radius;
+    auto discriminant = b * b - 4.0f * a * c;
+    return (discriminant >= 0);
+}
+
+glm::vec3 ray_color(const ray &r)
+{
+    auto sphere_pos = glm::vec3(0, 0, -1);
+    auto sphere_radius = 0.5f;
+    if (hit_sphere(sphere_pos, sphere_radius, r))
+        return glm::vec3(1, 0, 0);
+
+    glm::vec3 unit_direction = glm::normalize(r.direction());
+    auto factor = 0.5f * (unit_direction.y + 1.0f);
+    auto lerp = (1.0f - factor) * glm::vec3(1.0f, 1.0f, 1.0f) + factor * glm::vec3(0.5, 0.7, 1.0);
+    return lerp;
+}
+
 void renderLoop(GLFWwindow *window,
                 const Shader &shader,
                 const unsigned int &VAO,
                 unsigned int &texture,
-                const int &WIDTH,
-                const int &HEIGHT,
-                const int &MAX_ITERATIONS,
-                const int &DISPLAY_INTERVAL)
+                const unsigned int &WIDTH,
+                const unsigned int &HEIGHT)
 {
-    auto clear_color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
     std::vector<glm::vec3> accumulationBuffer(WIDTH * HEIGHT, glm::vec3(0.0f));
     std::vector<int> sampleCount(WIDTH * HEIGHT, 0);
 
-    int iteration = 0;
+    // Camera
+    auto focal_length = 1.0;
+    auto viewport_height = 2.0;
+    auto viewport_width = viewport_height * (WIDTH / HEIGHT);
+    auto camera_center = glm::vec3(0, 0, 0);
+
+    // Calculate the vectors across the horizontal and down the vertical viewport edges.
+    auto viewport_u = glm::vec3(viewport_width, 0, 0);
+    auto viewport_v = glm::vec3(0, viewport_height, 0);
+
+    // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+    auto pixel_delta_u = viewport_u / (float)WIDTH;
+    auto pixel_delta_v = viewport_v / (float)HEIGHT;
+
+    // Calculate the location of the upper left pixel.
+    auto viewport_upper_left = camera_center - glm::vec3(0, 0, focal_length) - viewport_u / 2.0f - viewport_v / 2.0f;
+    auto pixel00_loc = viewport_upper_left + 0.5f * (pixel_delta_u + pixel_delta_v);
+
     while (!glfwWindowShouldClose(window))
     {
         for (int y = 0; y < HEIGHT; ++y)
         {
             for (int x = 0; x < WIDTH; ++x)
             {
-                glm::vec3 ray = tracePath(x, y, WIDTH, HEIGHT);
+                auto pixel_center = pixel00_loc + (float(x) * pixel_delta_u) + (float(y) * pixel_delta_v);
+                auto ray_direction = pixel_center - camera_center;
+                ray r(camera_center, ray_direction);
+
+                glm::vec3 pixel_color = ray_color(r);
                 int index = y * WIDTH + x;
-                accumulationBuffer[index] += ray;
+                accumulationBuffer[index] += pixel_color;
                 sampleCount[index] += 1;
             }
         }
 
-        if (iteration % DISPLAY_INTERVAL == 0)
+        auto clear_color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
+        clearFrame(clear_color);
+        std::vector<glm::vec3> currentImage(WIDTH * HEIGHT);
+        for (int i = 0; i < WIDTH * HEIGHT; ++i)
         {
-            clearFrame(clear_color);
-
-            std::vector<glm::vec3> currentImage(WIDTH * HEIGHT);
-            for (int i = 0; i < WIDTH * HEIGHT; ++i)
-            {
-                currentImage[i] = accumulationBuffer[i] / static_cast<float>(sampleCount[i]);
-            }
-            updateTexture(texture, currentImage, WIDTH, HEIGHT);
-
-            shader.use();
-            glBindVertexArray(VAO);
-            glBindTexture(GL_TEXTURE_2D, texture);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-
-            renderUI();
-            glfwSwapBuffers(window);
-            glfwPollEvents();
+            currentImage[i] = accumulationBuffer[i] / static_cast<float>(sampleCount[i]);
         }
-        iteration++;
+        updateTexture(texture, currentImage, WIDTH, HEIGHT);
+
+        shader.use();
+        glBindVertexArray(VAO);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        renderUI();
+        glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 }

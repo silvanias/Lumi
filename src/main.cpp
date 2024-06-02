@@ -14,7 +14,6 @@ void initQuad(unsigned int &VAO, unsigned int &VBO)
 {
   std::array<float, 24>
       quadVertices = {
-          // positions     // texCoords
           -1.0f, 1.0f, 0.0f, 1.0f,
           -1.0f, -1.0f, 0.0f, 0.0f,
           1.0f, -1.0f, 1.0f, 0.0f,
@@ -38,31 +37,35 @@ void initQuad(unsigned int &VAO, unsigned int &VBO)
   glBindVertexArray(0);
 }
 
-const int WIDTH = 500;
-const int HEIGHT = 500;
-const int MAX_ITERATIONS = 1000;
-const int DISPLAY_INTERVAL = 10;
+void configureTexture(unsigned int &texture, const int &WIDTH, const int &HEIGHT)
+{
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, nullptr);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
 
 int main()
 {
+  const unsigned int WIDTH = 500;
+  const unsigned int HEIGHT = 500;
+
   GLFWwindow *window = createWindow(WIDTH, HEIGHT);
   configWindow(window);
   initializeGlAD();
   initImGui(window);
 
   Shader shader("../src/render/shaders/vertex.vs", "../src/render/shaders/fragment.fs");
+
   unsigned int quadVAO;
   unsigned int quadVBO;
   initQuad(quadVAO, quadVBO);
 
   unsigned int texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_FLOAT, nullptr);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  configureTexture(texture, WIDTH, HEIGHT);
 
-  renderLoop(window, shader, quadVAO, texture, WIDTH, HEIGHT, MAX_ITERATIONS, DISPLAY_INTERVAL);
+  renderLoop(window, shader, quadVAO, texture, WIDTH, HEIGHT);
   ImGuiShutdown();
   glfwShutdown(window);
   return 0;
