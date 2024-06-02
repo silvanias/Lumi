@@ -48,8 +48,8 @@ void configureTexture(unsigned int &texture, const int &WIDTH, const int &HEIGHT
 
 int main()
 {
-  const unsigned int WIDTH = 500;
-  const unsigned int HEIGHT = 500;
+  const unsigned int WIDTH = 400;
+  const unsigned int HEIGHT = 400;
 
   GLFWwindow *window = createWindow(WIDTH, HEIGHT);
   configWindow(window);

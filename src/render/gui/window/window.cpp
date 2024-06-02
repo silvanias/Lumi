@@ -24,7 +24,7 @@ GLFWwindow *createWindow(GLint scr_width, GLint scr_height)
 void configWindow(GLFWwindow *window)
 {
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 }
 
 bool initializeGlAD()

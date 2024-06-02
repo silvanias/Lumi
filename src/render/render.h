@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <glm/glm.hpp>
-
+#include <glm/gtx/norm.hpp>
 #include "imgui/imgui.h"
 #include "gui/window/window.h"
 #include "gui/imgui/render/imgui_render.h"
@@ -21,27 +21,41 @@ void clearFrame(const ImVec4 &clear_color)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-bool hit_sphere(const glm::vec3 &center, double radius, const ray &r)
+float hit_sphere(const glm::vec3 &center, const float &radius, const ray &r)
 {
     glm::vec3 oc = center - r.origin();
-    auto a = dot(r.direction(), r.direction());
-    auto b = -2.0f * dot(r.direction(), oc);
-    auto c = dot(oc, oc) - radius * radius;
-    auto discriminant = b * b - 4.0f * a * c;
-    return (discriminant >= 0);
-}
+    float a = glm::length2(r.direction());
+    auto h = dot(r.direction(), oc);
+    auto c = glm::length2(oc) - radius * radius;
+    auto discriminant = h * h - a * c;
 
-glm::vec3 ray_color(const ray &r)
+    if (discriminant < 0)
+    {
+        return -1.0f;
+    }
+    else
+    {
+        return (h - sqrt(discriminant)) / a;
+    }
+};
+
+glm::vec3 rayColor(const ray &r)
 {
     auto sphere_pos = glm::vec3(0, 0, -1);
     auto sphere_radius = 0.5f;
-    if (hit_sphere(sphere_pos, sphere_radius, r))
-        return glm::vec3(1, 0, 0);
-
-    glm::vec3 unit_direction = glm::normalize(r.direction());
-    auto factor = 0.5f * (unit_direction.y + 1.0f);
-    auto lerp = (1.0f - factor) * glm::vec3(1.0f, 1.0f, 1.0f) + factor * glm::vec3(0.5, 0.7, 1.0);
-    return lerp;
+    auto hit_point = hit_sphere(sphere_pos, sphere_radius, r);
+    if (hit_point > 0.0f)
+    {
+        glm::vec3 normal = glm::normalize(r.at(hit_point) - sphere_pos);
+        return 0.5f * glm::vec3(normal.x + 1, normal.y + 1, normal.z + 1);
+    }
+    else
+    {
+        glm::vec3 unit_direction = glm::normalize(r.direction());
+        auto factor = 0.5f * (unit_direction.y + 1.0f);
+        auto lerp = (1.0f - factor) * glm::vec3(1.0f, 1.0f, 1.0f) + factor * glm::vec3(0.5, 0.7, 1.0);
+        return lerp;
+    }
 }
 
 void renderLoop(GLFWwindow *window,
@@ -57,7 +71,7 @@ void renderLoop(GLFWwindow *window,
     // Camera
     auto focal_length = 1.0;
     auto viewport_height = 2.0;
-    auto viewport_width = viewport_height * (WIDTH / HEIGHT);
+    auto viewport_width = viewport_height * ((float)WIDTH / (float)HEIGHT);
     auto camera_center = glm::vec3(0, 0, 0);
 
     // Calculate the vectors across the horizontal and down the vertical viewport edges.
@@ -82,7 +96,7 @@ void renderLoop(GLFWwindow *window,
                 auto ray_direction = pixel_center - camera_center;
                 ray r(camera_center, ray_direction);
 
-                glm::vec3 pixel_color = ray_color(r);
+                glm::vec3 pixel_color = rayColor(r);
                 int index = y * WIDTH + x;
                 accumulationBuffer[index] += pixel_color;
                 sampleCount[index] += 1;
