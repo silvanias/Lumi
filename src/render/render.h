@@ -7,6 +7,9 @@
 #include "gui/window/window.h"
 #include "gui/imgui/render/imgui_render.h"
 #include "shaders/shader.h"
+#include "hittable.h"
+#include "hittable_list.h"
+#include "sphere.h"
 #include "ray.h"
 
 void updateTexture(unsigned int texture, const std::vector<glm::vec3> &image, const int &WIDTH, const int &HEIGHT)
@@ -21,33 +24,12 @@ void clearFrame(const ImVec4 &clear_color)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-float hit_sphere(const glm::vec3 &center, const float &radius, const ray &r)
+glm::vec3 rayColor(const Ray &r, const HittableList &world)
 {
-    glm::vec3 oc = center - r.origin();
-    float a = glm::length2(r.direction());
-    auto h = dot(r.direction(), oc);
-    auto c = glm::length2(oc) - radius * radius;
-    auto discriminant = h * h - a * c;
-
-    if (discriminant < 0)
+    HitRecord rec;
+    if (world.hit(r, 0, INFINITY, rec))
     {
-        return -1.0f;
-    }
-    else
-    {
-        return (h - sqrt(discriminant)) / a;
-    }
-};
-
-glm::vec3 rayColor(const ray &r)
-{
-    auto sphere_pos = glm::vec3(0, 0, -1);
-    auto sphere_radius = 0.5f;
-    auto hit_point = hit_sphere(sphere_pos, sphere_radius, r);
-    if (hit_point > 0.0f)
-    {
-        glm::vec3 normal = glm::normalize(r.at(hit_point) - sphere_pos);
-        return 0.5f * glm::vec3(normal.x + 1, normal.y + 1, normal.z + 1);
+        return 0.5f * (rec.normal + glm::vec3(1.0f, 1.0f, 1.0f));
     }
     else
     {
@@ -67,6 +49,12 @@ void renderLoop(GLFWwindow *window,
 {
     std::vector<glm::vec3> accumulationBuffer(WIDTH * HEIGHT, glm::vec3(0.0f));
     std::vector<int> sampleCount(WIDTH * HEIGHT, 0);
+
+    // World
+
+    HittableList world;
+    world.add(make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5));
+    world.add(make_shared<Sphere>(glm::vec3(0, -100.5, -1), 100));
 
     // Camera
     auto focal_length = 1.0;
@@ -94,9 +82,9 @@ void renderLoop(GLFWwindow *window,
             {
                 auto pixel_center = pixel00_loc + (float(x) * pixel_delta_u) + (float(y) * pixel_delta_v);
                 auto ray_direction = pixel_center - camera_center;
-                ray r(camera_center, ray_direction);
+                Ray r(camera_center, ray_direction);
 
-                glm::vec3 pixel_color = rayColor(r);
+                glm::vec3 pixel_color = rayColor(r, world);
                 int index = y * WIDTH + x;
                 accumulationBuffer[index] += pixel_color;
                 sampleCount[index] += 1;

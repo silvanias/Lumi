@@ -2,11 +2,11 @@
 
 #include <glm/glm.hpp>
 
-class ray
+class Ray
 {
 public:
-    ray() = default;
-    ray(const glm::vec3 &origin, const glm::vec3 &direction) : orig(origin), dir(direction) {}
+    Ray() = default;
+    Ray(const glm::vec3 &origin, const glm::vec3 &direction) : orig(origin), dir(direction) {}
 
     const glm::vec3 &origin() const { return orig; }
     const glm::vec3 &direction() const { return dir; }
