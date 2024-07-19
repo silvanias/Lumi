@@ -55,7 +55,7 @@ private:
     glm::vec3 rayColor(const Ray &r, const HittableList &world) const
     {
         HitRecord rec;
-        if (world.hit(r, 0, INFINITY, rec))
+        if (world.hit(r, Interval(0, INFINITY), rec))
         {
             return 0.5f * (rec.normal + glm::vec3(1.0f, 1.0f, 1.0f));
         }

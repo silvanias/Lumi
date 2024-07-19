@@ -1,0 +1,189 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{hyperref}
+
+\title{Path Tracing Renderer Using Monte Carlo Methods}
+\author{Your Name}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    This report presents a study on the implementation of a path tracing renderer using Monte Carlo methods to simulate realistic lighting in a 3D scene. Various sampling techniques and variance reduction methods are explored to enhance image quality and convergence speed. Experimental results demonstrate the effectiveness of these techniques in reducing noise and improving rendering efficiency.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+\label{sec:intro}
+Path tracing is a rendering technique used to create realistic images by simulating the way light interacts with objects in a scene. Unlike traditional ray tracing, which traces a single path of light from the eye to the light source, path tracing traces multiple light paths to account for complex interactions like reflection, refraction, and scattering. This report details the implementation of a path tracing renderer using Monte Carlo integration to approximate the rendering equation.
+
+\section{Background and Related Work}
+\label{sec:background}
+\subsection{Monte Carlo Methods in Path Tracing}
+Monte Carlo integration is a statistical technique used to approximate the rendering equation by randomly sampling light paths and averaging their contributions to pixel color. The rendering equation, formulated by Kajiya in 1986, is given by:
+
+\begin{equation}
+    L_o(\mathbf{x}, \omega_o) = L_e(\mathbf{x}, \omega_o) + \int_{\Omega} f_r(\mathbf{x}, \omega_i, \omega_o) L_i(\mathbf{x}, \omega_i) (\omega_i \cdot \mathbf{n}) \, d\omega_i
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $L_o(\mathbf{x}, \omega_o)$ is the outgoing radiance at point $\mathbf{x}$ in direction $\omega_o$.
+    \item $L_e(\mathbf{x}, \omega_o)$ is the emitted radiance at point $\mathbf{x}$ in direction $\omega_o$.
+    \item $f_r(\mathbf{x}, \omega_i, \omega_o)$ is the bidirectional reflectance distribution function (BRDF) at point $\mathbf{x}$ for incoming direction $\omega_i$ and outgoing direction $\omega_o$.
+    \item $L_i(\mathbf{x}, \omega_i)$ is the incoming radiance at point $\mathbf{x}$ from direction $\omega_i$.
+    \item $\omega_i \cdot \mathbf{n}$ is the cosine of the angle between the incoming direction $\omega_i$ and the surface normal $\mathbf{n}$.
+    \item $\Omega$ is the hemisphere above the point $\mathbf{x}$.
+\end{itemize}
+
+\subsection{Sampling Techniques}
+Different sampling strategies affect the efficiency and quality of the rendered images. Uniform sampling, importance sampling, and stratified sampling are common techniques used in Monte Carlo integration for path tracing.
+
+\textbf{Uniform Sampling:} Samples are taken uniformly across the domain. While simple to implement, this method can result in high variance and slow convergence.
+
+\textbf{Importance Sampling:} Samples are drawn from a distribution that closely matches the integrand, reducing variance and improving convergence.
+
+\textbf{Stratified Sampling:} The domain is divided into strata, and samples are taken from each stratum. This technique reduces variance by ensuring a more even coverage of the domain.
+
+\section{Methodology}
+\label{sec:methodology}
+\subsection{Scene Setup}
+A basic 3D scene is created with simple geometric objects, a light source, and a camera. The scene includes objects like spheres and planes, and a point light source to illuminate the scene. The camera is positioned to capture the entire scene.
+
+\subsection{Basic Ray Tracing Algorithm}
+A basic ray tracing algorithm is implemented to handle the initial light path calculations. Rays are traced from the camera through each pixel and into the scene. The algorithm calculates intersections with objects, reflects or refracts rays as necessary, and accumulates the color contributions along the path.
+
+\subsection{Monte Carlo Integration Framework}
+The Monte Carlo integration framework is developed for the path tracing renderer. Light paths are traced stochastically, and their contributions are averaged to approximate the solution to the rendering equation. Specifically, the Monte Carlo estimator for the integral can be represented as:
+
+\begin{equation}
+    \hat{I} = \frac{1}{N} \sum_{i=1}^{N} f(\mathbf{x}_i)
+\end{equation}
+
+where $\hat{I}$ is the estimated integral, $N$ is the number of samples, and $f(\mathbf{x}_i)$ is the integrand evaluated at the $i$-th sample point $\mathbf{x}_i$.
+
+\subsection{Sampling Techniques}
+\subsubsection{Uniform Sampling}
+Random samples are generated uniformly across the hemisphere above each intersection point. The contributions of these samples are averaged to estimate the pixel color.
+
+\subsubsection{Importance Sampling}
+Importance sampling is implemented by generating samples according to the distribution of the BRDF at each intersection point. This focuses sampling efforts on the most significant light paths, reducing variance. The estimator in importance sampling is given by:
+
+\begin{equation}
+    \hat{I} = \frac{1}{N} \sum_{i=1}^{N} \frac{f(\mathbf{x}_i)}{p(\mathbf{x}_i)}
+\end{equation}
+
+where $p(\mathbf{x}_i)$ is the probability density function used for sampling.
+
+\subsubsection{Stratified Sampling}
+Stratified sampling is implemented by dividing the hemisphere into strata and sampling within each stratum. This ensures a more even coverage of the hemisphere and reduces variance compared to uniform sampling. The variance of the estimator in stratified sampling can be expressed as:
+
+\begin{equation}
+    \text{Var}(\hat{I}) = \frac{1}{N} \sum_{i=1}^{N} \text{Var}(f(\mathbf{x}_i) - \mathbb{E}[f(\mathbf{x}_i)])
+\end{equation}
+
+\subsection{Variance Reduction Techniques}
+Variance reduction techniques such as antithetic variates, control variates, and Russian roulette termination are introduced to enhance image quality.
+
+\textbf{Antithetic Variates:} Pairs of negatively correlated samples are used to reduce variance. If $\mathbf{X}$ and $\mathbf{X}'$ are antithetic pairs, then the estimator becomes:
+
+\begin{equation}
+    \hat{I} = \frac{1}{2N} \sum_{i=1}^{N} \left( f(\mathbf{X}_i) + f(\mathbf{X}'_i) \right)
+\end{equation}
+
+\textbf{Control Variates:} Known functions with calculable expected values are used to adjust the estimator, reducing variance. If $h(\mathbf{x})$ is a control variate with known expected value $\mathbb{E}[h(\mathbf{x})]$, the estimator is:
+
+\begin{equation}
+    \hat{I} = \frac{1}{N} \sum_{i=1}^{N} \left( f(\mathbf{x}_i) + c (h(\mathbf{x}_i) - \mathbb{E}[h(\mathbf{x})]) \right)
+\end{equation}
+
+\textbf{Russian Roulette Termination:} Paths are terminated probabilistically to balance the computational cost and variance reduction. The probability of termination is denoted by $p$, and the estimator becomes:
+
+\begin{equation}
+    \hat{I} = \frac{1}{N} \sum_{i=1}^{N} \frac{f(\mathbf{x}_i)}{1 - p}
+\end{equation}
+
+\section{Experiments and Results}
+\label{sec:experiments}
+\subsection{Image Quality and Convergence Analysis}
+The impact of each sampling method on image quality and convergence is visualized and analyzed. Uniform sampling, importance sampling, and stratified sampling are compared in terms of the noise level and convergence speed. Figures \ref{fig:uniform_sampling}, \ref{fig:importance_sampling}, and \ref{fig:stratified_sampling} show the rendered images using each technique, respectively.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{uniform_sampling.png}
+    \caption{Rendered image using Uniform Sampling}
+    \label{fig:uniform_sampling}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{importance_sampling.png}
+    \caption{Rendered image using Importance Sampling}
+    \label{fig:importance_sampling}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{stratified_sampling.png}
+    \caption{Rendered image using Stratified Sampling}
+    \label{fig:stratified_sampling}
+\end{figure}
+
+\subsection{Noise Level and Performance Comparison}
+Noise levels and performance improvements with different variance reduction techniques are measured and compared. Figures \ref{fig:antithetic_variates}, \ref{fig:control_variates}, and \ref{fig:russian_roulette} demonstrate the noise reduction achieved by each variance reduction technique.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{antithetic_variates.png}
+    \caption{Rendered image using Antithetic Variates}
+    \label{fig:antithetic_variates}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{control_variates.png}
+    \caption{Rendered image using Control Variates}
+    \label{fig:control_variates}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{russian_roulette.png}
+    \caption{Rendered image using Russian Roulette Termination}
+    \label{fig:russian_roulette}
+\end{figure}
+
+\subsection{Convergence Rate Study}
+Experiments are conducted to study the convergence rate of the path tracer. The number of samples per pixel is varied, and the resulting image quality is evaluated to understand the relationship between the number of samples and image accuracy. Figure \ref{fig:convergence_rate} shows the convergence rate for different sampling techniques.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{convergence_rate.png}
+    \caption{Convergence rate for different sampling techniques}
+    \label{fig:convergence_rate}
+\end{figure}
+
+\section{Discussion}
+\label{sec:discussion}
+\subsection{Statistical Analysis}
+Statistical analysis is used to demonstrate the effects of different sampling techniques and variance reduction methods on image quality. The variance and bias of each method are discussed, and the effectiveness of each technique in reducing noise and improving convergence is evaluated.
+
+\subsection{Number of Samples and Image Accuracy}
+The analysis shows how the number of samples affects image accuracy and convergence. More samples generally lead to higher accuracy but at a higher computational cost. The trade-offs between sample count, image quality, and rendering time are discussed.
+
+\section{Conclusion}
+\label{sec:conclusion}
+The study demonstrates that Monte Carlo methods are effective for path tracing and realistic image synthesis. Importance sampling and stratified sampling significantly improve image quality and convergence speed compared to uniform sampling. Variance reduction techniques further enhance the rendering efficiency by reducing noise. Future work could explore more advanced sampling strategies and real-time rendering optimizations.
+
+\section{References}
+\label{sec:references}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

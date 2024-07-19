@@ -8,7 +8,7 @@ class Sphere : public Hittable
 public:
     Sphere(const glm::vec3 &center, float radius) : center(center), radius(radius) {}
 
-    bool hit(const Ray &r, float ray_tmin, float ray_tmax, HitRecord &rec) const override
+    bool hit(const Ray &r, Interval ray_t, HitRecord &rec) const override
     {
 
         glm::vec3 origin_to_center = center - r.origin();
@@ -21,10 +21,10 @@ public:
 
         auto sqrtd = sqrt(discriminant);
         auto root = (h - sqrtd) / a;
-        if (root <= ray_tmin || ray_tmax <= root)
+        if (!ray_t.surrounds(root))
         {
             root = (h + sqrtd) / a;
-            if (root <= ray_tmin || ray_tmax <= root)
+            if (!ray_t.surrounds(root))
                 return false;
         }
 
