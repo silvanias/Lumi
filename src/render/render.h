@@ -30,7 +30,8 @@ void renderLoop(GLFWwindow *window,
                 const unsigned int &VAO,
                 const unsigned int &texture,
                 const unsigned int &WIDTH,
-                const unsigned int &HEIGHT)
+                const unsigned int &HEIGHT,
+                const unsigned int &SAMPLE_COUNT)
 {
     std::vector<glm::vec3> accumulationBuffer(WIDTH * HEIGHT, glm::vec3(0.0f));
     std::vector<int> sampleCount(WIDTH * HEIGHT, 0);
@@ -38,7 +39,7 @@ void renderLoop(GLFWwindow *window,
     HittableList world;
     world.add(make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5));
     world.add(make_shared<Sphere>(glm::vec3(0, -100.5, -1), 100));
-    Camera cam(WIDTH, HEIGHT);
+    Camera cam(WIDTH, HEIGHT, SAMPLE_COUNT);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -58,7 +59,7 @@ void renderLoop(GLFWwindow *window,
         glBindTexture(GL_TEXTURE_2D, texture);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        renderUI();
+        // renderUI();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

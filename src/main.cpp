@@ -48,8 +48,9 @@ void configureTexture(unsigned int &texture, const int &WIDTH, const int &HEIGHT
 
 int main()
 {
-  const unsigned int WIDTH = 400;
-  const unsigned int HEIGHT = 400;
+  const unsigned int WIDTH = 1100;
+  const unsigned int HEIGHT = 1100;
+  const unsigned int SAMPLE_COUNT = 1;
 
   GLFWwindow *window = createWindow(WIDTH, HEIGHT);
   configWindow(window);
@@ -65,7 +66,7 @@ int main()
   unsigned int texture;
   configureTexture(texture, WIDTH, HEIGHT);
 
-  renderLoop(window, shader, quadVAO, texture, WIDTH, HEIGHT);
+  renderLoop(window, shader, quadVAO, texture, WIDTH, HEIGHT, SAMPLE_COUNT);
   ImGuiShutdown();
   glfwShutdown(window);
   return 0;
