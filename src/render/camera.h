@@ -6,7 +6,7 @@
 class Camera
 {
 public:
-    Camera(int IMAGE_HEIGHT, int IMAGE_WIDTH, int SAMPLE_PER_PIXEL) : image_height(IMAGE_HEIGHT), image_width(IMAGE_WIDTH), sample_per_pixel(SAMPLE_PER_PIXEL) {}
+    Camera(int IMAGE_HEIGHT, int IMAGE_WIDTH, int SAMPLE_PER_PIXEL, int MAX_DEPTH) : image_height(IMAGE_HEIGHT), image_width(IMAGE_WIDTH), sample_per_pixel(SAMPLE_PER_PIXEL), max_depth(MAX_DEPTH) {}
 
     void render(const HittableList &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount)
     {
@@ -19,17 +19,19 @@ public:
                 for (int sample = 0; sample < sample_per_pixel; sample++)
                 {
                     Ray r = getRandomRay(x, y);
-                    accumulationBuffer[index] += rayColor(r, world);
+                    accumulationBuffer[index] += rayColor(r, world, max_depth);
                     sampleCount[index] += 1;
                 }
             }
         }
     }
 
+    int image_height; // Rendered image height
+    int image_width;  // Rendered image width
+
 private:
-    int image_height;        // Rendered image height
-    int image_width;         // Rendered image width
     int sample_per_pixel;    // Samples per pixel
+    int max_depth;           // Max number of ray bounces
     glm::vec3 center;        // Camera center
     glm::vec3 pixel00_loc;   // Location of pixel 0, 0
     glm::vec3 pixel_delta_u; // Offset to pixel to the right
@@ -62,13 +64,18 @@ private:
         return r;
     }
 
-    glm::vec3 rayColor(const Ray &r, const HittableList &world) const
+    glm::vec3 rayColor(const Ray &r, const HittableList &world, int depth) const
     {
-        HitRecord rec;
-        if (world.hit(r, Interval(0, INFINITY), rec))
+        if (depth <= 0)
         {
-            // Colored to normal components
-            return 0.5f * (rec.normal + glm::vec3(1.0f, 1.0f, 1.0f));
+            return glm::vec3(0.0f, 0.0f, 0.0f);
+        }
+
+        HitRecord rec;
+        if (world.hit(r, Interval(0.001f, INFINITY), rec))
+        {
+            glm::vec3 direction = random_on_hemisphere(rec.normal);
+            return 0.5f * rayColor(Ray(rec.p, direction), world, depth - 1);
         }
         else
         {

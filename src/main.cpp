@@ -48,9 +48,11 @@ void configureTexture(unsigned int &texture, const int &WIDTH, const int &HEIGHT
 
 int main()
 {
-  const unsigned int WIDTH = 1100;
-  const unsigned int HEIGHT = 1100;
+  const unsigned int WIDTH = 500;
+  const unsigned int HEIGHT = 500;
+  const unsigned int IMAGE_SIZE = WIDTH * HEIGHT;
   const unsigned int SAMPLE_COUNT = 1;
+  const unsigned int MAX_DEPTH = 30;
 
   GLFWwindow *window = createWindow(WIDTH, HEIGHT);
   configWindow(window);
@@ -66,7 +68,12 @@ int main()
   unsigned int texture;
   configureTexture(texture, WIDTH, HEIGHT);
 
-  renderLoop(window, shader, quadVAO, texture, WIDTH, HEIGHT, SAMPLE_COUNT);
+  HittableList world;
+  world.add(make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5));
+  world.add(make_shared<Sphere>(glm::vec3(0, -100.5, -1), 100));
+
+  Camera camera(WIDTH, HEIGHT, SAMPLE_COUNT, MAX_DEPTH);
+  renderLoop(window, shader, quadVAO, texture, world, camera, IMAGE_SIZE);
   ImGuiShutdown();
   glfwShutdown(window);
   return 0;

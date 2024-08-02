@@ -29,31 +29,26 @@ void renderLoop(GLFWwindow *window,
                 const Shader &shader,
                 const unsigned int &VAO,
                 const unsigned int &texture,
-                const unsigned int &WIDTH,
-                const unsigned int &HEIGHT,
-                const unsigned int &SAMPLE_COUNT)
+                const HittableList &world,
+                Camera &camera,
+                const unsigned int &IMAGE_SIZE)
 {
-    std::vector<glm::vec3> accumulationBuffer(WIDTH * HEIGHT, glm::vec3(0.0f));
-    std::vector<int> sampleCount(WIDTH * HEIGHT, 0);
+    std::vector<glm::vec3> accumulationBuffer(IMAGE_SIZE, glm::vec3(0.0f));
+    std::vector<int> sampleCount(IMAGE_SIZE, 0);
+    std::vector<glm::vec3> currentImage(IMAGE_SIZE);
 
-    HittableList world;
-    world.add(make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5));
-    world.add(make_shared<Sphere>(glm::vec3(0, -100.5, -1), 100));
-    Camera cam(WIDTH, HEIGHT, SAMPLE_COUNT);
+    auto clear_color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
 
     while (!glfwWindowShouldClose(window))
     {
-        cam.render(world, accumulationBuffer, sampleCount);
+        camera.render(world, accumulationBuffer, sampleCount);
 
-        auto clear_color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
-        clearFrame(clear_color);
-        std::vector<glm::vec3> currentImage(WIDTH * HEIGHT);
-        for (int i = 0; i < WIDTH * HEIGHT; ++i)
-        {
+        for (int i = 0; i < IMAGE_SIZE; ++i)
             currentImage[i] = accumulationBuffer[i] / static_cast<float>(sampleCount[i]);
-        }
 
-        updateTexture(texture, currentImage, WIDTH, HEIGHT);
+        clearFrame(clear_color);
+        updateTexture(texture, currentImage, camera.image_width, camera.image_height);
+
         shader.use();
         glBindVertexArray(VAO);
         glBindTexture(GL_TEXTURE_2D, texture);
