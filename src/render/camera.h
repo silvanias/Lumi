@@ -74,7 +74,7 @@ private:
         HitRecord rec;
         if (world.hit(r, Interval(0.001f, INFINITY), rec))
         {
-            glm::vec3 direction = random_on_hemisphere(rec.normal);
+            glm::vec3 direction = rec.normal + sampleUnitSphere();
             return 0.5f * rayColor(Ray(rec.p, direction), world, depth - 1);
         }
         else

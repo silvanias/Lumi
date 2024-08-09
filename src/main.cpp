@@ -51,7 +51,7 @@ int main()
   const unsigned int WIDTH = 500;
   const unsigned int HEIGHT = 500;
   const unsigned int IMAGE_SIZE = WIDTH * HEIGHT;
-  const unsigned int SAMPLE_COUNT = 1;
+  const unsigned int SAMPLE_PER_PIXEL = 1;
   const unsigned int MAX_DEPTH = 30;
 
   GLFWwindow *window = createWindow(WIDTH, HEIGHT);
@@ -72,7 +72,7 @@ int main()
   world.add(make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5));
   world.add(make_shared<Sphere>(glm::vec3(0, -100.5, -1), 100));
 
-  Camera camera(WIDTH, HEIGHT, SAMPLE_COUNT, MAX_DEPTH);
+  Camera camera(WIDTH, HEIGHT, SAMPLE_PER_PIXEL, MAX_DEPTH);
   renderLoop(window, shader, quadVAO, texture, world, camera, IMAGE_SIZE);
   ImGuiShutdown();
   glfwShutdown(window);
