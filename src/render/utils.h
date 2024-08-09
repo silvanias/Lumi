@@ -16,6 +16,21 @@ inline double random_double(double min, double max)
     return distribution(generator);
 }
 
+inline double linear_to_gamma(double linear_color)
+{
+    if (linear_color > 0)
+        return sqrt(linear_color);
+    return 0;
+}
+
+inline glm::vec3 linear_to_gamma(glm::vec3 linear_color)
+{
+    return glm::vec3(
+        linear_to_gamma(linear_color.x),
+        linear_to_gamma(linear_color.y),
+        linear_to_gamma(linear_color.z));
+}
+
 glm::vec3 sampleUnitSquare()
 {
     return glm::vec3(random_double() - 0.5f, random_double() - 0.5f, 0.0f);

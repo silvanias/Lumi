@@ -44,8 +44,10 @@ void renderLoop(GLFWwindow *window,
         camera.render(world, accumulationBuffer, sampleCount);
 
         for (int i = 0; i < IMAGE_SIZE; ++i)
+        {
             currentImage[i] = accumulationBuffer[i] / static_cast<float>(sampleCount[i]);
-
+            currentImage[i] = linear_to_gamma(currentImage[i]);
+        }
         clearFrame(clear_color);
         updateTexture(texture, currentImage, camera.image_width, camera.image_height);
 
