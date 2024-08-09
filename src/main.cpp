@@ -52,7 +52,7 @@ int main()
   const unsigned int HEIGHT = 500;
   const unsigned int IMAGE_SIZE = WIDTH * HEIGHT;
   const unsigned int SAMPLE_PER_PIXEL = 1;
-  const unsigned int MAX_DEPTH = 30;
+  const unsigned int MAX_DEPTH = 10;
 
   GLFWwindow *window = createWindow(WIDTH, HEIGHT);
   configWindow(window);
