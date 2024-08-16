@@ -1,21 +1,22 @@
 #pragma once
 
+#include <glm/vec3.hpp>
+#include <memory>
 #include "ray.h"
 #include "interval.h"
+
+class Material;
 
 class HitRecord
 {
 public:
-    glm::vec3 p;
+    glm::vec3 point;
     glm::vec3 normal;
+    std::shared_ptr<Material> mat;
     float t;
     bool front_face;
 
-    void set_face_normal(const Ray &r, const glm::vec3 &outward_normal)
-    {
-        front_face = glm::dot(r.direction(), outward_normal) < 0;
-        normal = front_face ? outward_normal : -outward_normal;
-    }
+    void set_face_normal(const Ray &r, const glm::vec3 &outward_normal);
 };
 
 class Hittable

@@ -1,7 +1,9 @@
 #pragma once
 
 #include "utils.h"
+#include "hittable.h"
 #include "hittable_list.h"
+#include "material.h"
 
 class Camera
 {
@@ -39,11 +41,11 @@ private:
 
     void initialize()
     {
-        this->center = glm::vec3(0.0f, 0.0f, 0.0f);
+        this->center = glm::vec3(0.0f);
         auto focal_length = 1.0f;
         auto viewport_height = 2.0f;
         auto viewport_width = viewport_height * ((float)image_width / (float)image_height);
-        auto camera_center = glm::vec3(0, 0, 0);
+        auto camera_center = glm::vec3(0);
 
         // Vectors across the horizontal and up the vertical viewport edges.
         auto viewport_u = glm::vec3(viewport_width, 0, 0);
@@ -68,21 +70,23 @@ private:
     {
         if (depth <= 0)
         {
-            return glm::vec3(0.0f, 0.0f, 0.0f);
+            return glm::vec3(0.0f);
         }
 
         HitRecord rec;
         if (world.hit(r, Interval(0.001f, INFINITY), rec))
         {
-            glm::vec3 direction = rec.normal + sampleUnitSphere();
-            return 0.2f * rayColor(Ray(rec.p, direction), world, depth - 1);
+            Ray scattered;
+            if (auto attenuation = glm::vec3(0.0f); rec.mat->scatter(r, rec, attenuation, scattered))
+                return attenuation * rayColor(scattered, world, depth - 1);
+            return glm::vec3(0.0f);
         }
         else
         {
             // Background gradient
             glm::vec3 unit_direction = glm::normalize(r.direction());
             auto factor = 0.5f * (unit_direction.y + 1.0f);
-            auto lerp = (1.0f - factor) * glm::vec3(1.0f, 1.0f, 1.0f) + factor * glm::vec3(0.5, 0.7, 1.0);
+            auto lerp = (1.0f - factor) * glm::vec3(1.0f) + factor * glm::vec3(0.5, 0.7, 1.0);
             return lerp;
         }
     }

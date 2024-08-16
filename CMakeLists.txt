@@ -14,6 +14,8 @@ set(APP_SOURCES
     render/gui/imgui/lifecycle/imgui_lifecycle.cpp
     render/gui/imgui/render/imgui_render.cpp
     render/gui/window/window.cpp
+    render/material.cpp
+    render/hittable.cpp
 )
 list(TRANSFORM APP_SOURCES PREPEND src/)
 

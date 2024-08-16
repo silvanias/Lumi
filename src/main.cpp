@@ -9,6 +9,7 @@
 #include "render/shaders/shader.h"
 #include "render/render.h"
 #include "render/gui/imgui/lifecycle/imgui_lifecycle.h"
+#include "render/material.h"
 
 void initQuad(unsigned int &VAO, unsigned int &VBO)
 {
@@ -69,8 +70,12 @@ int main()
   configureTexture(texture, WIDTH, HEIGHT);
 
   HittableList world;
-  world.add(make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5));
-  world.add(make_shared<Sphere>(glm::vec3(0, -100.5, -1), 100));
+
+  auto material_ground = std::make_shared<Lambertian>(glm::vec3(0.8, 0.8, 0.0));
+  auto material_center = std::make_shared<Lambertian>(glm::vec3(0.1, 0.2, 0.5));
+
+  world.add(std::make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5, material_ground));
+  world.add(std::make_shared<Sphere>(glm::vec3(0, -100.5, -1), 100, material_center));
 
   Camera camera(WIDTH, HEIGHT, SAMPLE_PER_PIXEL, MAX_DEPTH);
   renderLoop(window, shader, quadVAO, texture, world, camera, IMAGE_SIZE);

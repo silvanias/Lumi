@@ -4,20 +4,17 @@
 #include <vector>
 #include "hittable.h"
 
-using std::make_shared;
-using std::shared_ptr;
-
 class HittableList
 {
 public:
-    std::vector<shared_ptr<Hittable>> objects;
+    std::vector<std::shared_ptr<Hittable>> objects;
 
     HittableList() = default;
-    HittableList(shared_ptr<Hittable> object) { add(object); }
+    explicit HittableList(std::shared_ptr<Hittable> object) { add(object); }
 
     void clear() { objects.clear(); }
 
-    void add(shared_ptr<Hittable> object)
+    void add(std::shared_ptr<Hittable> object)
     {
         objects.push_back(object);
     }

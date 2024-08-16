@@ -1,6 +1,7 @@
 #pragma once
 #include <random>
 #include <glm/glm.hpp>
+#include <glm/gtx/norm.hpp>
 
 inline double randomDouble()
 {
@@ -31,23 +32,23 @@ inline glm::vec3 linearToGamma(glm::vec3 linear_color)
         linearToGamma(linear_color.z));
 }
 
-glm::vec3 sampleUnitSquare()
+inline glm::vec3 sampleUnitSquare()
 {
     return glm::vec3(randomDouble() - 0.5f, randomDouble() - 0.5f, 0.0f);
 }
 
-glm::vec3 sampleUnitSphere()
+inline glm::vec3 sampleUnitSphere()
 {
     // TODO: Convert to analytical method
     while (true)
     {
-        auto p = glm::vec3(randomDouble(-1.0f, 1.0f), randomDouble(-1.0f, 1.0f), randomDouble(-1.0f, 1.0f));
-        if (glm::length2(p) < 1)
-            return glm::normalize(p);
+        auto point = glm::vec3(randomDouble(-1.0f, 1.0f), randomDouble(-1.0f, 1.0f), randomDouble(-1.0f, 1.0f));
+        if (glm::length2(point) < 1)
+            return glm::normalize(point);
     }
 }
 
-glm::vec3 randomOnHemisphere(const glm::vec3 &normal)
+inline glm::vec3 randomOnHemisphere(const glm::vec3 &normal)
 {
     glm::vec3 on_unit_sphere = sampleUnitSphere();
     if (dot(on_unit_sphere, normal) > 0.0f)
