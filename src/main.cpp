@@ -49,11 +49,11 @@ void configureTexture(unsigned int &texture, const int &WIDTH, const int &HEIGHT
 
 int main()
 {
-  const unsigned int WIDTH = 1000;
-  const unsigned int HEIGHT = 1000;
+  const unsigned int WIDTH = 700;
+  const unsigned int HEIGHT = 400;
   const unsigned int IMAGE_SIZE = WIDTH * HEIGHT;
-  const unsigned int SAMPLE_PER_PIXEL = 4;
-  const unsigned int MAX_DEPTH = 100;
+  const unsigned int SAMPLE_PER_PIXEL = 1;
+  const unsigned int MAX_DEPTH = 5;
 
   GLFWwindow *window = createWindow(WIDTH, HEIGHT);
   configWindow(window);
@@ -71,15 +71,15 @@ int main()
 
   HittableList world;
 
-  auto material_ground = std::make_shared<Lambertian>(glm::vec3(0.1, 0.2, 0.5));
-  auto material_center = std::make_shared<Lambertian>(glm::vec3(0.76, 0.13, 0.89));
-  auto material_left = std::make_shared<Metal>(glm::vec3(0.8, 0.8, 0.8));
-  auto material_right = std::make_shared<Metal>(glm::vec3(0.8, 0.6, 0.2));
+  auto material_ground = std::make_shared<Lambertian>(glm::vec3(0.1f, 0.2f, 0.5f));
+  auto material_center = std::make_shared<Lambertian>(glm::vec3(0.76f, 0.13f, 0.89f));
+  auto material_left = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f));
+  auto material_right = std::make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f));
 
-  world.add(std::make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5, material_center));
-  world.add(std::make_shared<Sphere>(glm::vec3(0, -100.5, -1), 100, material_ground));
-  world.add(std::make_shared<Sphere>(glm::vec3(-1.0, 0.0, -1.0), 0.5, material_left));
-  world.add(std::make_shared<Sphere>(glm::vec3(1.0, 0.0, -1.0), 0.5, material_right));
+  world.add(std::make_shared<Sphere>(glm::vec3(0, 0, -1.0f), 0.5f, material_center));
+  world.add(std::make_shared<Sphere>(glm::vec3(0, -100.5f, -1), 100.0f, material_ground));
+  world.add(std::make_shared<Sphere>(glm::vec3(-1.0f, 0, -1.0f), 0.5f, material_left));
+  world.add(std::make_shared<Sphere>(glm::vec3(1.0f, 0, -1.0f), 0.5f, material_right));
 
   Camera camera(WIDTH, HEIGHT, SAMPLE_PER_PIXEL, MAX_DEPTH);
   renderLoop(window, shader, quadVAO, texture, world, camera, IMAGE_SIZE);

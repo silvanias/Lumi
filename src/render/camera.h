@@ -8,7 +8,7 @@
 class Camera
 {
 public:
-    Camera(int IMAGE_HEIGHT, int IMAGE_WIDTH, int SAMPLE_PER_PIXEL, int MAX_DEPTH) : image_height(IMAGE_HEIGHT), image_width(IMAGE_WIDTH), sample_per_pixel(SAMPLE_PER_PIXEL), max_depth(MAX_DEPTH) {}
+    Camera(const unsigned int IMAGE_WIDTH, const unsigned int IMAGE_HEIGHT, const unsigned int SAMPLE_PER_PIXEL, const unsigned int MAX_DEPTH) : image_width(IMAGE_WIDTH), image_height(IMAGE_HEIGHT), sample_per_pixel(SAMPLE_PER_PIXEL), max_depth(MAX_DEPTH) {}
 
     void render(const HittableList &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount)
     {
@@ -28,8 +28,8 @@ public:
         }
     }
 
-    int image_height; // Rendered image height
     int image_width;  // Rendered image width
+    int image_height; // Rendered image height
 
 private:
     int sample_per_pixel;    // Samples per pixel
