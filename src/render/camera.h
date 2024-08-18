@@ -8,7 +8,7 @@
 class Camera
 {
 public:
-    Camera(const unsigned int IMAGE_WIDTH, const unsigned int IMAGE_HEIGHT, const unsigned int SAMPLE_PER_PIXEL, const unsigned int MAX_DEPTH) : image_width(IMAGE_WIDTH), image_height(IMAGE_HEIGHT), sample_per_pixel(SAMPLE_PER_PIXEL), max_depth(MAX_DEPTH) {}
+    Camera(const unsigned int IMAGE_WIDTH, const unsigned int IMAGE_HEIGHT, const float VERT_FOV, const unsigned int SAMPLE_PER_PIXEL, const unsigned int MAX_DEPTH) : image_width(IMAGE_WIDTH), image_height(IMAGE_HEIGHT), vert_fov(VERT_FOV), sample_per_pixel(SAMPLE_PER_PIXEL), max_depth(MAX_DEPTH) {}
 
     void render(const HittableList &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount)
     {
@@ -32,18 +32,23 @@ public:
     int image_height; // Rendered image height
 
 private:
-    int sample_per_pixel;    // Samples per pixel
-    int max_depth;           // Max number of ray bounces
-    glm::vec3 center;        // Camera center
-    glm::vec3 pixel00_loc;   // Location of pixel 0, 0
-    glm::vec3 pixel_delta_u; // Offset to pixel to the right
-    glm::vec3 pixel_delta_v; // Offset to pixel below
+    const float vert_fov;       // Vertical view angle
+    const int sample_per_pixel; // Samples per pixel
+    const int max_depth;        // Max number of ray bounces
+    glm::vec3 center;           // Camera center
+    glm::vec3 pixel00_loc;      // Location of pixel 0, 0
+    glm::vec3 pixel_delta_u;    // Offset to pixel to the right
+    glm::vec3 pixel_delta_v;    // Offset to pixel below
 
     void initialize()
     {
         this->center = glm::vec3(0.0f);
         auto focal_length = 1.0f;
-        auto viewport_height = 2.0f;
+
+        // FOV
+        auto h = std::tan(vert_fov / 2);
+        auto viewport_height = 2 * h * focal_length;
+
         auto viewport_width = viewport_height * ((float)image_width / (float)image_height);
         auto camera_center = glm::vec3(0);
 
