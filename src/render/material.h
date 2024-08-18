@@ -26,3 +26,14 @@ public:
 private:
     glm::vec3 albedo;
 };
+
+class Metal : public Material
+{
+public:
+    explicit Metal(const glm::vec3 &albedo);
+
+    bool scatter(const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered) const override;
+
+private:
+    glm::vec3 albedo;
+};

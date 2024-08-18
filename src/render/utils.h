@@ -56,3 +56,8 @@ inline glm::vec3 randomOnHemisphere(const glm::vec3 &normal)
     else
         return -on_unit_sphere;
 }
+
+inline glm::vec3 reflect(const glm::vec3 &vec, const glm::vec3 &normal)
+{
+    return vec - 2 * dot(vec, normal) * normal;
+}
