@@ -8,7 +8,7 @@
 class Camera
 {
 public:
-    Camera(const unsigned int &IMAGE_WIDTH, const unsigned int &IMAGE_HEIGHT, const glm::vec3 &POS, const glm::vec3 &FOCAL_POINT, const glm::vec3 &UP, const float &VERT_FOV, const unsigned int &SAMPLE_PER_PIXEL, const unsigned int &MAX_DEPTH) : look_from(POS), look_at(FOCAL_POINT), vup(UP), vert_fov(VERT_FOV), image_width(IMAGE_WIDTH), image_height(IMAGE_HEIGHT), sample_per_pixel(SAMPLE_PER_PIXEL), max_depth(MAX_DEPTH) {}
+    Camera(const unsigned int &IMAGE_WIDTH, const unsigned int &IMAGE_HEIGHT, const glm::vec3 &POS, const glm::vec3 &FOCAL_POINT, const glm::vec3 &UP, const float &VERT_FOV, const unsigned int &SAMPLE_PER_PIXEL, const unsigned int &MAX_DEPTH) : image_width(IMAGE_WIDTH), image_height(IMAGE_HEIGHT), center(POS), look_at(FOCAL_POINT), vup(UP), vert_fov(VERT_FOV), sample_per_pixel(SAMPLE_PER_PIXEL), max_depth(MAX_DEPTH) {}
 
     void render(const HittableList &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount)
     {
@@ -33,7 +33,6 @@ public:
 
 private:
     glm::vec3 center;           // Camera center
-    glm::vec3 look_from;        // Point camera is looking from
     glm::vec3 look_at;          // Point camera is looking at
     glm::vec3 vup;              // Camera-relative "up" direction
     const float vert_fov;       // Vertical view angle
@@ -43,12 +42,13 @@ private:
     glm::vec3 pixel00_loc;   // Location of pixel 0, 0
     glm::vec3 pixel_delta_u; // Offset to pixel to the right
     glm::vec3 pixel_delta_v; // Offset to pixel below
-    glm::vec3 u, v, w;       // Camera frame basis vectors
+    glm::vec3 u;             // Camera frame basis vectors
+    glm::vec3 v;
+    glm::vec3 w;
 
     void initialize()
     {
-        this->center = look_from;
-        auto focal_length = glm::length(look_from - look_at);
+        auto focal_length = glm::length(center - look_at);
 
         // FOV
         auto h = std::tan(vert_fov / 2);
@@ -56,7 +56,7 @@ private:
         auto viewport_width = viewport_height * ((float)image_width / (float)image_height);
 
         // Camera frame basis vectors
-        w = (look_from - look_at) / focal_length;
+        w = (center - look_at) / focal_length;
         u = glm::normalize(glm::cross(vup, w));
         v = glm::cross(w, u);
 
