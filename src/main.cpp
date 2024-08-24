@@ -49,12 +49,17 @@ void configureTexture(unsigned int &texture, const int &WIDTH, const int &HEIGHT
 
 int main()
 {
-  const unsigned int WIDTH = 700;
-  const unsigned int HEIGHT = 400;
+  const unsigned int WIDTH = 1000;
+  const unsigned int HEIGHT = 800;
   const unsigned int IMAGE_SIZE = WIDTH * HEIGHT;
-  const float VERT_FOV = 1.5f;
+
+  const glm::vec3 CAMERA_POS = glm::vec3(0.0f, 0.0f, 1.0f);
+  const glm::vec3 CAMERA_FOCAL_POINT = glm::vec3(0.0f, 0.0f, -1.0f);
+  const glm::vec3 CAMERA_UP_VEC = glm::vec3(0.0f, 1.0f, 0.0f);
+  const float VERT_FOV = 1.4f;
+
   const unsigned int SAMPLE_PER_PIXEL = 1;
-  const unsigned int MAX_DEPTH = 100;
+  const unsigned int MAX_DEPTH = 1000;
 
   GLFWwindow *window = createWindow(WIDTH, HEIGHT);
   configWindow(window);
@@ -82,7 +87,7 @@ int main()
   world.add(std::make_shared<Sphere>(glm::vec3(-1.0f, 0, -1.0f), 0.5f, material_left));
   world.add(std::make_shared<Sphere>(glm::vec3(1.0f, 0, -1.0f), 0.5f, material_right));
 
-  Camera camera(WIDTH, HEIGHT, VERT_FOV, SAMPLE_PER_PIXEL, MAX_DEPTH);
+  Camera camera(WIDTH, HEIGHT, CAMERA_POS, CAMERA_FOCAL_POINT, CAMERA_UP_VEC, VERT_FOV, SAMPLE_PER_PIXEL, MAX_DEPTH);
   renderLoop(window, shader, quadVAO, texture, world, camera, IMAGE_SIZE);
   ImGuiShutdown();
   glfwShutdown(window);
