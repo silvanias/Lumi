@@ -7,11 +7,11 @@
 #include "gui/window/window.h"
 #include "gui/imgui/render/imgui_render.h"
 #include "shaders/shader.h"
-#include "hittable.h"
-#include "hittable_list.h"
-#include "sphere.h"
-#include "ray.h"
-#include "camera.h"
+#include "geometry/hittable.h"
+#include "geometry/hittable_list.h"
+#include "geometry/sphere.h"
+#include "geometry/ray.h"
+#include "camera/camera.h"
 
 void updateTexture(unsigned int texture, const std::vector<glm::vec3> &image, const int &WIDTH, const int &HEIGHT)
 {

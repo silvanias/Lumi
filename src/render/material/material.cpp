@@ -1,5 +1,5 @@
 #include "material.h"
-#include "hittable.h"
+#include "geometry/hittable.h"
 
 Lambertian::Lambertian(const glm::vec3 &albedo) : albedo(albedo) {}
 

@@ -2,7 +2,7 @@
 
 #include <glm/vec3.hpp>
 #include "utils.h"
-#include "ray.h"
+#include "geometry/ray.h"
 
 class HitRecord;
 

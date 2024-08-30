@@ -14,9 +14,10 @@ set(APP_SOURCES
     render/gui/imgui/lifecycle/imgui_lifecycle.cpp
     render/gui/imgui/render/imgui_render.cpp
     render/gui/window/window.cpp
-    render/camera.cpp
-    render/material.cpp
-    render/hittable.cpp
+    render/camera/camera.cpp
+    render/material/material.cpp
+    render/geometry/hittable.cpp
+    render/geometry/interval.cpp
 )
 list(TRANSFORM APP_SOURCES PREPEND src/)
 
@@ -37,8 +38,8 @@ add_executable(lumi ${APP_SOURCES} ${LIB_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE
     lib/imgui
     ${CMAKE_SOURCE_DIR}/lib
-    ${CMAKE_SOURCE_DIR}/src)
-
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/render)
 
 target_link_libraries(lumi PRIVATE ${OPENGL_LIBRARIES})
 target_link_libraries(lumi PRIVATE glfw)

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "render/hittable_list.h"
-#include "render/material.h"
-#include "render/sphere.h"
+#include "geometry/hittable_list.h"
+#include "geometry/sphere.h"
+#include "material/material.h"
 
 HittableList createWorld()
 {
