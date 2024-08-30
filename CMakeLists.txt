@@ -14,6 +14,7 @@ set(APP_SOURCES
     render/gui/imgui/lifecycle/imgui_lifecycle.cpp
     render/gui/imgui/render/imgui_render.cpp
     render/gui/window/window.cpp
+    render/camera.cpp
     render/material.cpp
     render/hittable.cpp
 )

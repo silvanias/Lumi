@@ -6,7 +6,7 @@ Lambertian::Lambertian(const glm::vec3 &albedo) : albedo(albedo) {}
 bool Lambertian::scatter(
     const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered) const
 {
-    auto scatter_direction = rec.normal + sampleUnitSphere();
+    auto scatter_direction = rec.normal + Utils::Sampling::sampleUnitSphere();
     // TODO: is it necessary to check if scatter_direction near zero?
     scattered = Ray(rec.point, scatter_direction);
     attenuation = albedo;

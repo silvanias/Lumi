@@ -8,11 +8,9 @@
 
 void initQuad(unsigned int &VAO, unsigned int &VBO)
 {
-    unsigned int quadVAO;
-    unsigned int quadVBO;
-
     std::array<float, 24>
         quadVertices = {
+            // Pos       // Texture Coords
             -1.0f, 1.0f, 0.0f, 1.0f,
             -1.0f, -1.0f, 0.0f, 0.0f,
             1.0f, -1.0f, 1.0f, 0.0f,
