@@ -6,7 +6,12 @@
 class Sphere : public Hittable
 {
 public:
-    Sphere(const glm::vec3 &center, float radius, std::shared_ptr<Material> material) : center(center), radius(radius), mat(material) {}
+    Sphere(const glm::vec3 &center, float radius, std::shared_ptr<Material> material)
+        : center(center), radius(radius), mat(material)
+    {
+        auto radius_vec = glm::vec3(radius, radius, radius);
+        bbox = AABB(center - radius_vec, center + radius_vec);
+    }
 
     bool hit(const Ray &r, Interval ray_t, HitRecord &rec) const override
     {
@@ -37,8 +42,11 @@ public:
         return true;
     }
 
+    AABB bounding_box() const override { return bbox; }
+
 private:
     glm::vec3 center;
     float radius;
     std::shared_ptr<Material> mat;
+    AABB bbox;
 };
