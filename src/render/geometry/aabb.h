@@ -7,20 +7,27 @@
 class AABB
 {
 public:
-    Interval x_interval;
-    Interval y_interval;
-    Interval z_interval;
+    Interval x;
+    Interval y;
+    Interval z;
 
     AABB() {}
 
     AABB(const Interval &x, const Interval &y, const Interval &z)
-        : x_interval(x), y_interval(y), z_interval(z) {}
+        : x(x), y(y), z(z) {}
 
     AABB(const glm::vec3 &point1, const glm::vec3 &point2)
     {
-        x_interval = (point1[0] <= point2[0]) ? Interval(point1[0], point2[0]) : Interval(point2[0], point1[0]);
-        y_interval = (point1[1] <= point2[1]) ? Interval(point1[1], point2[1]) : Interval(point2[1], point1[1]);
-        z_interval = (point1[2] <= point2[2]) ? Interval(point1[2], point2[2]) : Interval(point2[2], point1[2]);
+        x = (point1[0] <= point2[0]) ? Interval(point1[0], point2[0]) : Interval(point2[0], point1[0]);
+        y = (point1[1] <= point2[1]) ? Interval(point1[1], point2[1]) : Interval(point2[1], point1[1]);
+        z = (point1[2] <= point2[2]) ? Interval(point1[2], point2[2]) : Interval(point2[2], point1[2]);
+    }
+
+    AABB(const AABB &box0, const AABB &box1)
+    {
+        x = Interval(box0.x, box1.x);
+        y = Interval(box0.y, box1.y);
+        z = Interval(box0.z, box1.z);
     }
 
     const Interval &getAxisInterval(int axis) const
@@ -28,11 +35,11 @@ public:
         switch (axis)
         {
         case 1:
-            return y_interval;
+            return y;
         case 2:
-            return z_interval;
+            return z;
         default:
-            return x_interval;
+            return x;
         }
     }
 

@@ -3,8 +3,9 @@
 #include <memory>
 #include <vector>
 #include "hittable.h"
+#include "aabb.h"
 
-class HittableList
+class HittableList : public Hittable
 {
 public:
     std::vector<std::shared_ptr<Hittable>> objects;
@@ -17,6 +18,7 @@ public:
     void add(std::shared_ptr<Hittable> object)
     {
         objects.push_back(object);
+        bbox = AABB(bbox, object->bounding_box());
     }
 
     bool hit(const Ray &r, Interval ray_t, HitRecord &rec) const
@@ -37,4 +39,9 @@ public:
 
         return hit_anything;
     }
+
+    AABB bounding_box() const override { return bbox; }
+
+private:
+    AABB bbox;
 };

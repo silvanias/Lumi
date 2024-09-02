@@ -10,6 +10,11 @@ public:
 
     Interval() : min(+INFINITY), max(-INFINITY) {}
     Interval(double min, double max) : min(min), max(max) {}
+    // Encompass both
+    Interval(const Interval &a, const Interval &b)
+        : min(a.min <= b.min ? a.min : b.min), max(a.max >= b.max ? a.max : b.max)
+    {
+    }
 
     double size() const
     {
