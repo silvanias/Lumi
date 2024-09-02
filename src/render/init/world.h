@@ -3,6 +3,7 @@
 #include "geometry/hittable_list.h"
 #include "geometry/sphere.h"
 #include "material/material.h"
+#include "geometry/bvh.h"
 
 HittableList createWorld()
 {
@@ -18,5 +19,7 @@ HittableList createWorld()
     world.add(std::make_shared<Sphere>(glm::vec3(-1.0f, 0, -1.0f), 0.5f, material_left));
     world.add(std::make_shared<Sphere>(glm::vec3(1.0f, 0, -1.0f), 0.5f, material_right));
 
+    // Accelerate
+    world = HittableList(std::make_shared<BVHNode>(world));
     return world;
 };

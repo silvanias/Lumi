@@ -22,7 +22,12 @@ namespace Utils
             std::uniform_real_distribution<> distribution(min, max);
             return distribution(generator);
         }
-    } // namespace Random
+
+        inline int randomInt(int min, int max)
+        {
+            return int(randomDouble(min, max + 1));
+        }
+    }
 
     // Color conversion utilities
     namespace Color
