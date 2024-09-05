@@ -12,11 +12,21 @@ public:
 
     BVHNode(std::vector<std::shared_ptr<Hittable>> &objects, size_t start, size_t end)
     {
-        int axis = Utils::Random::randomInt(0, 2);
+        bbox = AABB::empty;
+        for (size_t object_index = start; object_index < end; object_index++)
+            bbox = AABB(bbox, objects[object_index]->bounding_box());
 
-        auto comparator = (axis == 0)   ? box_x_compare
-                          : (axis == 1) ? box_y_compare
-                                        : box_z_compare;
+        int axis = bbox.longestAxis();
+
+        auto comparator = box_x_compare;
+        if (axis == 1)
+        {
+            comparator = box_y_compare;
+        }
+        else if (axis == 2)
+        {
+            comparator = box_z_compare;
+        }
 
         size_t object_span = end - start;
 
@@ -34,13 +44,10 @@ public:
         {
             // O(nlogn)
             std::sort(std::begin(objects) + start, std::begin(objects) + end, comparator);
-
             auto mid = start + object_span / 2;
             left = std::make_shared<BVHNode>(objects, start, mid);
             right = std::make_shared<BVHNode>(objects, mid, end);
         }
-
-        bbox = AABB(left->bounding_box(), right->bounding_box());
     }
 
     bool hit(const Ray &r, Interval ray_t, HitRecord &rec) const override

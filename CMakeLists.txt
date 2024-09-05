@@ -18,6 +18,7 @@ set(APP_SOURCES
     render/material/material.cpp
     render/geometry/hittable.cpp
     render/geometry/interval.cpp
+    render/geometry/aabb.cpp
 )
 list(TRANSFORM APP_SOURCES PREPEND src/)
 
