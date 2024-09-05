@@ -12,6 +12,8 @@
 #include "geometry/sphere.h"
 #include "geometry/ray.h"
 #include "camera/camera.h"
+#include <chrono>
+#include <iostream>
 
 void updateTexture(unsigned int texture, const std::vector<glm::vec3> &image, const int &WIDTH, const int &HEIGHT)
 {
@@ -39,9 +41,26 @@ void renderLoop(GLFWwindow *window,
 
     auto clear_color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
 
+    double totalRenderTime = 0.0;
+    int numRuns = 0;
+
     while (!glfwWindowShouldClose(window))
     {
+        auto start = std::chrono::high_resolution_clock::now();
+
         camera.render(world, accumulationBuffer, sampleCount);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+
+        totalRenderTime += elapsed.count();
+        ++numRuns;
+
+        double averageRenderTime = totalRenderTime / numRuns;
+
+        std::cout << "Current render time: " << elapsed.count() << " seconds, "
+                  << "Average render time: " << averageRenderTime << " seconds, "
+                  << "Number of runs: " << numRuns << std::endl;
 
         for (int i = 0; i < IMAGE_SIZE; ++i)
         {

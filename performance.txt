@@ -1,0 +1,16 @@
+WIDTH = 500;
+HEIGHT = 500;
+SAMPLE_PER_PIXEL = 10;
+MAX_DEPTH = 1000;
+
+
+SPHERE_COUNT = 400;
+Current render time: 42.4609 seconds, Average render time: 42.5515 seconds, Number of runs: 25
+No BVH:
+Current render time: 220.644 seconds, Average render time: 220.947 seconds, Number of runs: 10
+
+
+SPHERE_COUNT = 4;
+Current render time: 5.25922 seconds, Average render time: 5.26984 seconds, Number of runs: 600
+No BVH:
+Current render time: 5.52864 seconds, Average render time: 5.50982 seconds, Number of runs: 100

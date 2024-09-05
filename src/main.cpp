@@ -7,8 +7,8 @@
 
 int main()
 {
-  const unsigned int WIDTH = 800;
-  const unsigned int HEIGHT = 640;
+  const unsigned int WIDTH = 500;
+  const unsigned int HEIGHT = 500;
   const unsigned int IMAGE_SIZE = WIDTH * HEIGHT;
   GLFWwindow *window = createWindow(WIDTH, HEIGHT);
   configWindow(window);
@@ -26,12 +26,12 @@ int main()
 
   HittableList world = createWorld();
 
-  const auto CAMERA_POS = glm::vec3(0.0f, 0.0f, 1.0f);
+  const auto CAMERA_POS = glm::vec3(-3.0f, 3.0f, 1.0f);
   const auto CAMERA_FOCAL_POINT = glm::vec3(0.0f, 0.0f, 0.0f);
   const auto CAMERA_UP_VEC = glm::vec3(0.0f, 1.0f, 0.0f);
-  const float VERT_FOV = 1.0f;
-  const unsigned int SAMPLE_PER_PIXEL = 1;
-  const unsigned int MAX_DEPTH = 100;
+  const float VERT_FOV = 1.2f;
+  const unsigned int SAMPLE_PER_PIXEL = 10;
+  const unsigned int MAX_DEPTH = 1000;
 
   Camera camera(WIDTH, HEIGHT, CAMERA_POS, CAMERA_FOCAL_POINT, CAMERA_UP_VEC, VERT_FOV, SAMPLE_PER_PIXEL, MAX_DEPTH);
   renderLoop(window, shader, quadVAO, texture, world, camera, IMAGE_SIZE);
