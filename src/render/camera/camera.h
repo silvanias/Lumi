@@ -5,11 +5,13 @@
 #include "geometry/hittable.h"
 #include "geometry/hittable_list.h"
 #include "material/material.h"
+#include "init/world.h"
 
 class Camera
 {
 public:
     Camera(unsigned int imageWidth, unsigned int imageHeight, const glm::vec3 &pos, const glm::vec3 &focalPoint, const glm::vec3 &up, float vertFov, unsigned int samplesPerPixel, unsigned int maxDepth);
+    Camera(unsigned int imageWidth, unsigned int imageHeight, const CamPos &camPos, unsigned int samplesPerPixel, unsigned int maxDepth);
 
     void render(const HittableList &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount);
 

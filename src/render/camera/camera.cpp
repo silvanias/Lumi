@@ -7,6 +7,12 @@ Camera::Camera(unsigned int imageWidth, unsigned int imageHeight, const glm::vec
     initialize();
 }
 
+Camera::Camera(unsigned int imageWidth, unsigned int imageHeight, const CamPos &camPos, unsigned int samplesPerPixel, unsigned int maxDepth)
+    : Camera(imageWidth, imageHeight, camPos.CAMERA_POS, camPos.CAMERA_FOCAL_POINT, camPos.CAMERA_UP_VEC, camPos.VERT_FOV, samplesPerPixel, maxDepth)
+{
+    // Delegate to main constructor
+}
+
 void Camera::initialize()
 {
     auto focal_length = glm::length(center - look_at);

@@ -15,6 +15,7 @@ set(APP_SOURCES
     render/gui/imgui/render/imgui_render.cpp
     render/gui/window/window.cpp
     render/camera/camera.cpp
+    render/init/world.cpp
     render/material/material.cpp
     render/geometry/hittable.cpp
     render/geometry/interval.cpp
