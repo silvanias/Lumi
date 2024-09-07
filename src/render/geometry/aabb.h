@@ -22,4 +22,7 @@ public:
 
     static const AABB empty;
     static const AABB universe;
+
+private:
+    void padToMinimum();
 };

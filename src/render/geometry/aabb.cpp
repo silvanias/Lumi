@@ -6,7 +6,10 @@ const AABB AABB::universe = AABB(Interval::universe, Interval::universe, Interva
 AABB::AABB() = default;
 
 AABB::AABB(const Interval &x, const Interval &y, const Interval &z)
-    : x(x), y(y), z(z) {}
+    : x(x), y(y), z(z)
+{
+    padToMinimum();
+}
 
 AABB::AABB(const glm::vec3 &point1, const glm::vec3 &point2)
 {
@@ -66,4 +69,15 @@ bool AABB::hit(const Ray &ray, Interval ray_interval) const
             return false;
     }
     return true;
+}
+
+void AABB::padToMinimum()
+{
+    float min = 0.0001f;
+    if (x.size() < min)
+        x = x.expand(min);
+    if (y.size() < min)
+        y = y.expand(min);
+    if (z.size() < min)
+        z = z.expand(min);
 }

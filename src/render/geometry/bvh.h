@@ -14,7 +14,7 @@ public:
     {
         bbox = AABB::empty;
         for (size_t object_index = start; object_index < end; object_index++)
-            bbox = AABB(bbox, objects[object_index]->bounding_box());
+            bbox = AABB(bbox, objects[object_index]->boundingBox());
 
         int axis = bbox.longestAxis();
 
@@ -61,7 +61,7 @@ public:
         return hit_left || hit_right;
     }
 
-    AABB bounding_box() const override { return bbox; }
+    AABB boundingBox() const override { return bbox; }
 
 private:
     std::shared_ptr<Hittable> left;
@@ -71,8 +71,8 @@ private:
     static bool box_compare(
         const std::shared_ptr<Hittable> a, const std::shared_ptr<Hittable> b, int axis_index)
     {
-        auto a_axis_interval = a->bounding_box().getAxisInterval(axis_index);
-        auto b_axis_interval = b->bounding_box().getAxisInterval(axis_index);
+        auto a_axis_interval = a->boundingBox().getAxisInterval(axis_index);
+        auto b_axis_interval = b->boundingBox().getAxisInterval(axis_index);
         return a_axis_interval.min < b_axis_interval.min;
     }
 

@@ -40,6 +40,12 @@ public:
         return x;
     }
 
+    Interval expand(double delta) const
+    {
+        auto padding = delta / 2;
+        return Interval(min - padding, max + padding);
+    }
+
     static const Interval empty;
     static const Interval universe;
 };

@@ -35,14 +35,14 @@ public:
         rec.t = root;
         rec.point = r.at(rec.t);
         glm::vec3 outward_normal = (rec.point - center) / radius;
-        rec.set_face_normal(r, outward_normal);
+        rec.setFaceNormal(r, outward_normal);
         rec.normal = (rec.point - center) / radius;
         rec.mat = mat;
 
         return true;
     }
 
-    AABB bounding_box() const override { return bbox; }
+    AABB boundingBox() const override { return bbox; }
 
 private:
     glm::vec3 center;
