@@ -7,7 +7,7 @@ MAX_DEPTH = 1000;
 SPHERE_COUNT = 400;
 Current render time: 42.4609 seconds, Average render time: 42.5515 seconds, Number of runs: 25
 Split down longest axis BVH:
-Current render time: 38.7385 seconds, Average render time: 38.7385 seconds, Number of runs: 10
+Current render time: 30.9304 seconds, Average render time: 30.7101 seconds, Number of runs: 30
 No BVH:
 Current render time: 220.644 seconds, Average render time: 220.947 seconds, Number of runs: 10
 
