@@ -16,6 +16,7 @@ AABB::AABB(const glm::vec3 &point1, const glm::vec3 &point2)
     x = (point1[0] <= point2[0]) ? Interval(point1[0], point2[0]) : Interval(point2[0], point1[0]);
     y = (point1[1] <= point2[1]) ? Interval(point1[1], point2[1]) : Interval(point2[1], point1[1]);
     z = (point1[2] <= point2[2]) ? Interval(point1[2], point2[2]) : Interval(point2[2], point1[2]);
+    padToMinimum();
 }
 
 AABB::AABB(const AABB &box0, const AABB &box1)
@@ -54,7 +55,7 @@ bool AABB::hit(const Ray &ray, Interval ray_interval) const
     for (int axis = 0; axis < 3; axis++)
     {
         const Interval &axis_interval = getAxisInterval(axis);
-        const double inverse_direction = 1.0 / ray_direction[axis];
+        const double inverse_direction = 1.0f / ray_direction[axis];
 
         auto t0 = (axis_interval.min - ray_origin[axis]) * inverse_direction;
         auto t1 = (axis_interval.max - ray_origin[axis]) * inverse_direction;

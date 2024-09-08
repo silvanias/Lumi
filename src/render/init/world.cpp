@@ -12,6 +12,12 @@ const CamPos CAM_POS_QUAD{
     glm::vec3(0.0f, 1.0f, 0.0f),
     1.4f};
 
+const CamPos CAM_POS_CORNELL_BOX{
+    glm::vec3(278, 278, -800),
+    glm::vec3(278, 278, 0),
+    glm::vec3(0, 1, 0),
+    0.7f};
+
 HittableList sphereWorld()
 {
     HittableList world;
@@ -81,11 +87,11 @@ HittableList quadWorld()
     HittableList world;
 
     // Materials
-    auto left_red = std::make_shared<Lambertian>(glm::vec3(1.0, 0.2, 0.2));
-    auto back_green = std::make_shared<Lambertian>(glm::vec3(0.2, 1.0, 0.2));
-    auto right_blue = std::make_shared<Lambertian>(glm::vec3(0.2, 0.2, 1.0));
-    auto upper_orange = std::make_shared<Lambertian>(glm::vec3(1.0, 0.5, 0.0));
-    auto lower_teal = std::make_shared<Lambertian>(glm::vec3(0.2, 0.8, 0.8));
+    auto left_red = std::make_shared<Lambertian>(glm::vec3(1.0f, 0.2f, 0.2f));
+    auto back_green = std::make_shared<Lambertian>(glm::vec3(0.2f, 1.0f, 0.2f));
+    auto right_blue = std::make_shared<Lambertian>(glm::vec3(0.2f, 0.2f, 1.0f));
+    auto upper_orange = std::make_shared<Lambertian>(glm::vec3(1.0f, 0.5f, 0.0f));
+    auto lower_teal = std::make_shared<Lambertian>(glm::vec3(0.2f, 0.8f, 0.8f));
 
     // Quads
     world.add(std::make_shared<Quad>(glm::vec3(-3, -2, 5), glm::vec3(0, 0, -4), glm::vec3(0, 4, 0), left_red));
@@ -94,5 +100,23 @@ HittableList quadWorld()
     world.add(std::make_shared<Quad>(glm::vec3(-2, 3, 1), glm::vec3(4, 0, 0), glm::vec3(0, 0, 4), upper_orange));
     world.add(std::make_shared<Quad>(glm::vec3(-2, -3, 5), glm::vec3(4, 0, 0), glm::vec3(0, 0, -4), lower_teal));
 
+    return world;
+}
+
+HittableList cornellBox()
+{
+    HittableList world;
+
+    auto red = std::make_shared<Lambertian>(glm::vec3(0.65f, 0.05f, 0.05f));
+    auto white = std::make_shared<Lambertian>(glm::vec3(.73, .73, .73));
+    auto green = std::make_shared<Lambertian>(glm::vec3(.12, .45, .15));
+
+    world.add(std::make_shared<Quad>(glm::vec3(555, 0, 0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555), green));
+    world.add(std::make_shared<Quad>(glm::vec3(0, 0, 0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555), red));
+    world.add(std::make_shared<Quad>(glm::vec3(0, 0, 0), glm::vec3(555, 0, 0), glm::vec3(0, 0, 555), white));
+    world.add(std::make_shared<Quad>(glm::vec3(555, 555, 555), glm::vec3(-555, 0, 0), glm::vec3(0, 0, -555), white));
+    world.add(std::make_shared<Quad>(glm::vec3(0, 0, 555), glm::vec3(555, 0, 0), glm::vec3(0, 555, 0), white));
+
+    world = HittableList(std::make_shared<BVHNode>(world));
     return world;
 }

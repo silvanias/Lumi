@@ -18,6 +18,8 @@ struct CamPos
 HittableList sphereWorld();
 HittableList complexSphereWorld();
 HittableList quadWorld();
+HittableList cornellBox();
 
 extern const CamPos CAM_POS_SPHERE;
 extern const CamPos CAM_POS_QUAD;
+extern const CamPos CAM_POS_CORNELL_BOX;
