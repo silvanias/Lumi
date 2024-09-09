@@ -1,10 +1,16 @@
 #include "world.h"
 
-const CamPos CAM_POS_SPHERE{
+const CamPos CAM_POS_SPHERES{
     glm::vec3(-3.0f, 3.0f, 1.0f),
     glm::vec3(0.0f, 0.0f, 0.0f),
     glm::vec3(0.0f, 1.0f, 0.0f),
     1.2f};
+
+const CamPos CAM_POS_LIT{
+    glm::vec3(26, 3, 6),
+    glm::vec3(0, 2, 0),
+    glm::vec3(0.0f, 1.0f, 0.0f),
+    0.35f};
 
 const CamPos CAM_POS_QUAD{
     glm::vec3(0.0f, 0.0f, 9.0f),
@@ -79,6 +85,23 @@ HittableList complexSphereWorld()
 
     // Accelerate
     world = HittableList(std::make_shared<BVHNode>(world));
+    return world;
+}
+
+HittableList litWorld()
+{
+    HittableList world;
+
+    auto material = std::make_shared<Lambertian>(glm::vec3(0.4, 0.2, 0.1));
+    auto metal = std::make_shared<Metal>(glm::vec3(0.7, 0.7, 0.7));
+    auto difflight = std::make_shared<DiffuseLight>(glm::vec3(4, 4, 4));
+    auto bluelight = std::make_shared<DiffuseLight>(glm::vec3(0.5f, 0.5f, 6));
+
+    world.add(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000, material));
+    world.add(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2, metal));
+    world.add(std::make_shared<Quad>(glm::vec3(3, 1, -2), glm::vec3(2, 0, 0), glm::vec3(0, 2, 0), bluelight));
+    world.add(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2, difflight));
+
     return world;
 }
 

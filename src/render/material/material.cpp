@@ -1,6 +1,11 @@
 #include "material.h"
 #include "geometry/hittable.h"
 
+glm::vec3 Material::emitted() const
+{
+    return glm::vec3(0, 0, 0);
+}
+
 Lambertian::Lambertian(const glm::vec3 &albedo) : albedo(albedo) {}
 
 bool Lambertian::scatter(
@@ -22,4 +27,17 @@ bool Metal::scatter(
     scattered = Ray(rec.point, reflected);
     attenuation = albedo;
     return true;
+}
+
+DiffuseLight::DiffuseLight(const glm::vec3 &emit) : emit(emit) {}
+
+glm::vec3 DiffuseLight::emitted() const
+{
+    return emit;
+}
+
+bool DiffuseLight::scatter(
+    const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered) const
+{
+    return false;
 }

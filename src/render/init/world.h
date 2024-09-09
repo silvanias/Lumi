@@ -15,11 +15,15 @@ struct CamPos
     const float VERT_FOV;
 };
 
+extern const CamPos CAM_POS_SPHERES;
 HittableList sphereWorld();
 HittableList complexSphereWorld();
-HittableList quadWorld();
-HittableList cornellBox();
 
-extern const CamPos CAM_POS_SPHERE;
+extern const CamPos CAM_POS_LIT;
+HittableList litWorld();
+
 extern const CamPos CAM_POS_QUAD;
+HittableList quadWorld();
+
 extern const CamPos CAM_POS_CORNELL_BOX;
+HittableList cornellBox();

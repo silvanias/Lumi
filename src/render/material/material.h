@@ -13,6 +13,8 @@ public:
 
     virtual bool scatter(
         const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered) const = 0;
+
+    virtual glm::vec3 emitted() const;
 };
 
 class Lambertian : public Material
@@ -36,4 +38,16 @@ public:
 
 private:
     glm::vec3 albedo;
+};
+
+class DiffuseLight : public Material
+{
+public:
+    DiffuseLight(const glm::vec3 &emit);
+
+    glm::vec3 emitted() const override;
+    bool scatter(const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered) const override;
+
+private:
+    glm::vec3 emit;
 };

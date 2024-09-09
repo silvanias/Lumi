@@ -52,27 +52,22 @@ Ray Camera::getRandomRay(int x, int y) const
 glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, int depth) const
 {
     if (depth <= 0)
-    {
         return glm::vec3(0.0f);
-    }
 
     HitRecord rec;
-    if (world.hit(r, Interval(0.001f, INFINITY), rec))
-    {
-        Ray scattered;
-        glm::vec3 attenuation;
-        if (rec.mat->scatter(r, rec, attenuation, scattered))
-            return attenuation * rayColor(scattered, world, depth - 1);
-        return glm::vec3(0.0f);
-    }
-    else
-    {
-        // Background gradient
-        glm::vec3 unit_direction = glm::normalize(r.direction());
-        auto factor = 0.5f * (unit_direction.y + 1.0f);
-        auto lerp = (1.0f - factor) * glm::vec3(1.0f) + factor * glm::vec3(0.5, 0.7, 1.0);
-        return lerp;
-    }
+
+    if (!world.hit(r, Interval(0.001f, INFINITY), rec))
+        return glm::vec3(0, 0, 0);
+
+    Ray scattered;
+    glm::vec3 attenuation;
+    glm::vec3 color_from_emission = rec.mat->emitted();
+
+    if (!rec.mat->scatter(r, rec, attenuation, scattered))
+        return color_from_emission;
+
+    glm::vec3 color_from_scatter = attenuation * rayColor(scattered, world, depth - 1);
+    return color_from_scatter + color_from_emission;
 }
 
 // Render the world into the accumulation buffer

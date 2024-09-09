@@ -24,12 +24,12 @@ int main()
   unsigned int texture;
   configureTexture(texture, WIDTH, HEIGHT);
 
-  HittableList world = quadWorld();
+  HittableList world = litWorld();
 
   const unsigned int SAMPLE_PER_PIXEL = 10;
   const unsigned int MAX_DEPTH = 1000;
 
-  Camera camera(WIDTH, HEIGHT, CAM_POS_QUAD, SAMPLE_PER_PIXEL, MAX_DEPTH);
+  Camera camera(WIDTH, HEIGHT, CAM_POS_LIT, SAMPLE_PER_PIXEL, MAX_DEPTH);
   renderLoop(window, shader, quadVAO, texture, world, camera, IMAGE_SIZE);
 
   ImGuiShutdown();
