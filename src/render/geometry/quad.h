@@ -73,3 +73,23 @@ private:
     AABB bbox;
     std::shared_ptr<Material> mat;
 };
+
+inline std::shared_ptr<HittableList> Box(const glm::vec3 &a, const glm::vec3 &b, std::shared_ptr<Material> mat)
+{
+    auto sides = std::make_shared<HittableList>();
+    auto min = glm::min(a, b);
+    auto max = glm::max(a, b);
+
+    glm::vec3 dx(max.x - min.x, 0, 0);
+    glm::vec3 dy(0, max.y - min.y, 0);
+    glm::vec3 dz(0, 0, max.z - min.z);
+
+    sides->add(std::make_shared<Quad>(glm::vec3(min.x, min.y, max.z), dx, dy, mat));  // front
+    sides->add(std::make_shared<Quad>(glm::vec3(max.x, min.y, max.z), -dz, dy, mat)); // right
+    sides->add(std::make_shared<Quad>(glm::vec3(max.x, min.y, min.z), -dx, dy, mat)); // back
+    sides->add(std::make_shared<Quad>(glm::vec3(min.x, min.y, min.z), dz, dy, mat));  // left
+    sides->add(std::make_shared<Quad>(glm::vec3(min.x, max.y, max.z), dx, -dz, mat)); // top
+    sides->add(std::make_shared<Quad>(glm::vec3(min.x, min.y, min.z), dx, dz, mat));  // bottom
+
+    return sides;
+}
