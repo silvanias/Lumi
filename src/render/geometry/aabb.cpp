@@ -72,6 +72,11 @@ bool AABB::hit(const Ray &ray, Interval ray_interval) const
     return true;
 }
 
+AABB AABB::operator+(const glm::vec3 &offset)
+{
+    return AABB(x + offset.x, y + offset.y, z + offset.z);
+}
+
 void AABB::padToMinimum()
 {
     float min = 0.0001f;

@@ -46,6 +46,11 @@ public:
         return Interval(min - padding, max + padding);
     }
 
+    Interval operator+(double displacement)
+    {
+        return Interval(min + displacement, max + displacement);
+    }
+
     static const Interval empty;
     static const Interval universe;
 };

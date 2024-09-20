@@ -135,15 +135,23 @@ HittableList cornellBox()
     auto green = std::make_shared<Lambertian>(glm::vec3(.12, .45, .15));
     auto light = std::make_shared<DiffuseLight>(glm::vec3(15, 15, 15));
 
+    // Room
     world.add(std::make_shared<Quad>(glm::vec3(555, 0, 0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555), green));
     world.add(std::make_shared<Quad>(glm::vec3(0, 0, 0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555), red));
     world.add(std::make_shared<Quad>(glm::vec3(0, 0, 0), glm::vec3(555, 0, 0), glm::vec3(0, 0, 555), white));
     world.add(std::make_shared<Quad>(glm::vec3(555, 555, 555), glm::vec3(-555, 0, 0), glm::vec3(0, 0, -555), white));
     world.add(std::make_shared<Quad>(glm::vec3(0, 0, 555), glm::vec3(555, 0, 0), glm::vec3(0, 555, 0), white));
-    world.add(Box(glm::vec3(130, 0, 65), glm::vec3(295, 165, 230), white));
-    world.add(Box(glm::vec3(265, 0, 295), glm::vec3(430, 330, 460), white));
 
     world.add(std::make_shared<Quad>(glm::vec3(343, 554, 332), glm::vec3(-130, 0, 0), glm::vec3(0, 0, -105), light));
+
+    // Boxes
+    std::shared_ptr<Hittable> box1 = Box(glm::vec3(0, 0, 0), glm::vec3(165, 330, 165), white);
+    box1 = std::make_shared<Translate>(box1, glm::vec3(265, 0, 295));
+    world.add(box1);
+
+    std::shared_ptr<Hittable> box2 = Box(glm::vec3(0, 0, 0), glm::vec3(165, 165, 165), white);
+    box2 = std::make_shared<Translate>(box2, glm::vec3(130, 0, 65));
+    world.add(box2);
 
     return world;
 }

@@ -20,6 +20,8 @@ public:
     int longestAxis() const;
     bool hit(const Ray &ray, Interval ray_interval) const;
 
+    AABB operator+(const glm::vec3 &offset);
+
     static const AABB empty;
     static const AABB universe;
 
