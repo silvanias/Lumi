@@ -146,10 +146,12 @@ HittableList cornellBox()
 
     // Boxes
     std::shared_ptr<Hittable> box1 = Box(glm::vec3(0, 0, 0), glm::vec3(165, 330, 165), white);
+    box1 = std::make_shared<RotateY>(box1, 0.26);
     box1 = std::make_shared<Translate>(box1, glm::vec3(265, 0, 295));
     world.add(box1);
 
     std::shared_ptr<Hittable> box2 = Box(glm::vec3(0, 0, 0), glm::vec3(165, 165, 165), white);
+    box2 = std::make_shared<RotateY>(box2, -0.31);
     box2 = std::make_shared<Translate>(box2, glm::vec3(130, 0, 65));
     world.add(box2);
 
