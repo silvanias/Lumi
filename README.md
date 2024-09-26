@@ -2,6 +2,10 @@
 
 Lumi is a C++ project designed for rendering intricate 3D scenes with realistic lighting and materials using OpenGL. Lumi provides a modular architecture for scene setup, camera control, and rendering. It leverages modern C++ capabilities and provides a simple GUI using ImGui for real-time interaction.
 
+Basic Diffuse Lighting     |  Cornell Box
+:-------------------------:|:-------------------------:
+<img width="496" alt="sphere_lit_by_diffuse" src="https://github.com/user-attachments/assets/3a81a962-c323-4cbe-b8ed-f9ba6802fafa"> | <img width="496" alt="cornell_box" src="https://github.com/user-attachments/assets/45c19019-ddaa-4d8f-b4f6-d573612a36de">
+
 This guide will walk you through the setup process for the `lumi` OpenGL Path tracer using CMake and vcpkg for dependency management.
 
 ## Prerequisites
