@@ -19,11 +19,13 @@ public:
     int image_height;
 
 private:
-    glm::vec3 center;  // Camera center
-    glm::vec3 look_at; // Point camera is looking at
-    glm::vec3 vup;     // Camera-relative "up" direction
-    float vert_fov;    // Vertical view angle
-    int sample_per_pixel;
+    glm::vec3 center;                    // Camera center
+    glm::vec3 look_at;                   // Point camera is looking at
+    glm::vec3 vup;                       // Camera-relative "up" direction
+    float vert_fov;                      // Vertical view angle
+    int sample_per_pixel_per_frame;      // Must be a square number
+    int sqrt_sample_per_pixel_per_frame; // To subdivide pixel into a grid
+    float recip_sqrt_sppf;
     int max_depth; // Max number of ray bounces
 
     glm::vec3 pixel00_loc;
@@ -35,5 +37,6 @@ private:
 
     void initialize();
     Ray getRandomRay(int x, int y) const;
+    Ray getRandomStratifiedRay(glm::vec3 pixelCenter, int gridX, int gridY) const;
     glm::vec3 rayColor(const Ray &r, const HittableList &world, int depth) const;
 };
