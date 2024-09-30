@@ -1,8 +1,8 @@
 #pragma once
 #include <algorithm>
 
-#include "ray.h"
-#include "interval.h"
+#include "../ray.h"
+#include "../interval.h"
 
 class AABB
 {

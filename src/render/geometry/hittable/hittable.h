@@ -2,9 +2,9 @@
 
 #include <glm/vec3.hpp>
 #include <memory>
-#include "ray.h"
-#include "interval.h"
-#include "aabb.h"
+#include "../ray.h"
+#include "../interval.h"
+#include "../bounding/aabb.h"
 
 class Material;
 

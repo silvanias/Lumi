@@ -17,9 +17,18 @@ set(APP_SOURCES
     render/camera/camera.cpp
     render/init/world.cpp
     render/material/material.cpp
-    render/geometry/hittable.cpp
+
+    render/geometry/bounding/aabb.cpp
+    render/geometry/bounding/bvh.cpp
+
+    render/geometry/hittable/hittable_list.cpp
+    render/geometry/hittable/hittable.cpp
+
+    render/geometry/objects/quad.cpp
+    render/geometry/objects/sphere.cpp
+    
     render/geometry/interval.cpp
-    render/geometry/aabb.cpp
+    
 )
 list(TRANSFORM APP_SOURCES PREPEND src/)
 

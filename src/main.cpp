@@ -27,11 +27,12 @@ int main()
   HittableList world = cornellBox();
 
   // For full use must be a square number (stratification in square grid)
-  const unsigned int SAMPLE_PER_PIXEL = 16;
+  const unsigned int SAMPLE_PER_PIXEL = 1;
   const unsigned int MAX_DEPTH = 1000;
 
   Camera camera(WIDTH, HEIGHT, CAM_POS_CORNELL_BOX, SAMPLE_PER_PIXEL, MAX_DEPTH);
-  renderLoop(window, shader, quadVAO, texture, world, camera, IMAGE_SIZE);
+  auto renderer = Render();
+  renderer.renderLoop(window, shader, quadVAO, texture, world, camera, IMAGE_SIZE);
 
   ImGuiShutdown();
   glfwShutdown(window);

@@ -1,5 +1,5 @@
 #include "material.h"
-#include "geometry/hittable.h"
+#include "geometry/hittable/hittable.h"
 
 glm::vec3 Material::emitted() const
 {

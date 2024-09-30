@@ -1,11 +1,11 @@
 #pragma once
 
 #include "utils.h"
-#include "geometry/hittable_list.h"
-#include "geometry/bvh.h"
+#include "geometry/hittable/hittable_list.h"
+#include "geometry/bounding/bvh.h"
 #include "material/material.h"
-#include "geometry/sphere.h"
-#include "geometry/quad.h"
+#include "geometry/objects/sphere.h"
+#include "geometry/objects/quad.h"
 
 struct CamPos
 {

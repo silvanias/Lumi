@@ -2,8 +2,8 @@
 
 #include <vector>
 #include "utils.h"
-#include "geometry/hittable.h"
-#include "geometry/hittable_list.h"
+#include "geometry/hittable/hittable.h"
+#include "geometry/hittable/hittable_list.h"
 #include "material/material.h"
 #include "init/world.h"
 
