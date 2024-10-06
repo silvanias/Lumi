@@ -1,8 +1,8 @@
 #include "camera.h"
 
 Camera::Camera(unsigned int imageWidth, unsigned int imageHeight, const glm::vec3 &pos, const glm::vec3 &focalPoint, const glm::vec3 &up, float vertFov, unsigned int samplesPerPixel, unsigned int maxDepth)
-    : image_width(imageWidth), image_height(imageHeight), center(pos), look_at(focalPoint),
-      vup(up), vert_fov(vertFov), sample_per_pixel_per_frame(samplesPerPixel), max_depth(maxDepth)
+    : imageWidth(imageWidth), imageHeight(imageHeight), center(pos), lookAt(focalPoint),
+      vup(up), vertFOV(vertFov), samplePerPixelPerFrame(samplesPerPixel), maxDepth(maxDepth)
 {
     initialize();
 }
@@ -16,40 +16,40 @@ Camera::Camera(unsigned int imageWidth, unsigned int imageHeight, const CamPos &
 void Camera::initialize()
 {
     // Forces the grid to be square, in the future there is a potential to divide in rectangles
-    sqrt_sample_per_pixel_per_frame = int(std::sqrt(sample_per_pixel_per_frame));
-    recip_sqrt_sppf = 1 / sqrt_sample_per_pixel_per_frame;
+    sqrtSamplePerPixelPerFrame = int(std::sqrt(samplePerPixelPerFrame));
+    recipSqrtSPPPF = 1 / sqrtSamplePerPixelPerFrame;
 
-    auto focal_length = glm::length(center - look_at);
+    auto focalLength = glm::length(center - lookAt);
 
     // Calculate viewport dimensions based on field of view and aspect ratio
-    auto h = std::tan(vert_fov / 2);
-    auto viewport_height = 2 * h * focal_length;
-    auto viewport_width = viewport_height * static_cast<float>(image_width) / static_cast<float>(image_height);
+    auto h = std::tan(vertFOV / 2);
+    auto viewportHeight = 2 * h * focalLength;
+    auto viewportWidth = viewportHeight * static_cast<float>(imageWidth) / static_cast<float>(imageHeight);
 
     // Camera frame basis vectors
-    w = glm::normalize(center - look_at);
+    w = glm::normalize(center - lookAt);
     u = glm::normalize(glm::cross(vup, w));
     v = glm::cross(w, u);
 
     // Vectors across the horizontal and up the vertical viewport edges.
-    auto viewport_u = viewport_width * u;
-    auto viewport_v = viewport_height * v;
+    auto viewportU = viewportWidth * u;
+    auto viewportV = viewportHeight * v;
 
     // Horizontal and vertical delta vectors from pixel to pixel.
-    pixel_delta_u = viewport_u / static_cast<float>(image_width);
-    pixel_delta_v = viewport_v / static_cast<float>(image_height);
+    pixelDeltaU = viewportU / static_cast<float>(imageWidth);
+    pixelDeltaV = viewportV / static_cast<float>(imageHeight);
 
-    auto viewport_upper_left = center - (focal_length * w) - viewport_u / 2.0f - viewport_v / 2.0f;
-    pixel00_loc = viewport_upper_left + 0.5f * (pixel_delta_u + pixel_delta_v);
+    auto viewportUpperLeft = center - (focalLength * w) - viewportU / 2.0f - viewportV / 2.0f;
+    pixel00Loc = viewportUpperLeft + 0.5f * (pixelDeltaU + pixelDeltaV);
 }
 
 // Get a random ray for a given pixel on the viewport
 Ray Camera::getRandomRay(int x, int y) const
 {
     auto offset = Utils::Sampling::sampleUnitSquare();
-    auto pixel_center = pixel00_loc + ((float(x) + offset.x) * pixel_delta_u) + ((float(y) + offset.y) * pixel_delta_v);
-    auto ray_direction = pixel_center - center;
-    Ray r(center, ray_direction);
+    auto pixelCenter = pixel00Loc + ((float(x) + offset.x) * pixelDeltaU) + ((float(y) + offset.y) * pixelDeltaV);
+    auto rayDirection = pixelCenter - center;
+    Ray r(center, rayDirection);
     return r;
 }
 
@@ -57,16 +57,16 @@ Ray Camera::getRandomRay(int x, int y) const
 Ray Camera::getRandomStratifiedRay(glm::vec3 pixelCenter, int gridX, int gridY) const
 {
     // -0.5 as the pixel spans -0.5f to +0.5f and grid top left is 0,0 in indices
-    glm::vec3 subPixelX = (gridX * recip_sqrt_sppf - 0.5f) * pixel_delta_u;
-    glm::vec3 subPixelY = (gridY * recip_sqrt_sppf - 0.5f) * pixel_delta_v;
+    glm::vec3 subPixelX = (gridX * recipSqrtSPPPF - 0.5f) * pixelDeltaU;
+    glm::vec3 subPixelY = (gridY * recipSqrtSPPPF - 0.5f) * pixelDeltaV;
 
     auto subPixel = pixelCenter + subPixelX + subPixelY;
 
-    auto offset = Utils::Sampling::sampleUnitSquare() * recip_sqrt_sppf;
+    auto offset = Utils::Sampling::sampleUnitSquare() * recipSqrtSPPPF;
     auto offsetSubPixel = subPixel + offset;
 
-    auto ray_direction = offsetSubPixel - center;
-    Ray r(center, ray_direction);
+    auto rayDirection = offsetSubPixel - center;
+    Ray r(center, rayDirection);
     return r;
 }
 
@@ -82,31 +82,31 @@ glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, int depth) c
 
     Ray scattered;
     glm::vec3 attenuation;
-    glm::vec3 color_from_emission = rec.mat->emitted();
+    glm::vec3 colorFromEmission = rec.mat->emitted();
 
     if (!rec.mat->scatter(r, rec, attenuation, scattered))
-        return color_from_emission;
+        return colorFromEmission;
 
-    glm::vec3 color_from_scatter = attenuation * rayColor(scattered, world, depth - 1);
-    return color_from_scatter + color_from_emission;
+    glm::vec3 colorFromScatter = attenuation * rayColor(scattered, world, depth - 1);
+    return colorFromScatter + colorFromEmission;
 }
 
 // Render the world into the accumulation buffer
 void Camera::render(const HittableList &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount)
 {
-    for (int y = 0; y < image_height; ++y)
+    for (int y = 0; y < imageHeight; ++y)
     {
-        for (int x = 0; x < image_width; ++x)
+        for (int x = 0; x < imageWidth; ++x)
         {
-            int index = y * image_width + x;
-            auto pixelCenter = pixel00_loc + (float(x) * pixel_delta_u) + (float(y) * pixel_delta_v);
+            int index = y * imageWidth + x;
+            auto pixelCenter = pixel00Loc + (float(x) * pixelDeltaU) + (float(y) * pixelDeltaV);
             // Stratify samples in grid to reduce variance in the image
-            for (int gridY = 0; gridY < sqrt_sample_per_pixel_per_frame; gridY++)
+            for (int gridY = 0; gridY < sqrtSamplePerPixelPerFrame; gridY++)
             {
-                for (int gridX = 0; gridX < sqrt_sample_per_pixel_per_frame; gridX++)
+                for (int gridX = 0; gridX < sqrtSamplePerPixelPerFrame; gridX++)
                 {
                     Ray r = getRandomStratifiedRay(pixelCenter, gridX, gridY);
-                    accumulationBuffer[index] += rayColor(r, world, max_depth);
+                    accumulationBuffer[index] += rayColor(r, world, maxDepth);
                     sampleCount[index] += 1;
                 }
             }

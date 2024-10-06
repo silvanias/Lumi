@@ -6,6 +6,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+// Initializes a quad with vertex array object (VAO) and vertex buffer object (VBO).
+// Quad is used for rendering a textured rectangle.
 void initQuad(unsigned int &VAO, unsigned int &VBO)
 {
     std::array<float, 24>
@@ -34,6 +36,7 @@ void initQuad(unsigned int &VAO, unsigned int &VBO)
     glBindVertexArray(0);
 }
 
+// Configures a texture for rendering, setting texture filtering parameters.
 void configureTexture(unsigned int &texture, const int &WIDTH, const int &HEIGHT)
 {
     glGenTextures(1, &texture);

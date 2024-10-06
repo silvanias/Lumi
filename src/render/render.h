@@ -14,21 +14,25 @@
 #include <chrono>
 #include <iostream>
 
+// Render class encapsulates functions for rendering scenes with texture updates and clear routines.
 class Render
 {
 public:
+    // Updates a texture with image data.
     void updateTexture(unsigned int texture, const std::vector<glm::vec3> &image, const int &WIDTH, const int &HEIGHT)
     {
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, WIDTH, HEIGHT, GL_RGB, GL_FLOAT, image.data());
     }
 
-    void clearFrame(const ImVec4 &clear_color)
+    // Clears the frame with specified color (Necessary for openGL).
+    void clearFrame(const ImVec4 &clearColor)
     {
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClearColor(clearColor.x * clearColor.w, clearColor.y * clearColor.w, clearColor.z * clearColor.w, clearColor.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
+    // Main rendering loop which handles camera rendering, image updates, and UI rendering.
     void renderLoop(GLFWwindow *window,
                     const Shader &shader,
                     const unsigned int &VAO,
@@ -41,7 +45,7 @@ public:
         std::vector<int> sampleCount(IMAGE_SIZE, 0);
         std::vector<glm::vec3> currentImage(IMAGE_SIZE);
 
-        auto clear_color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
+        auto clearColor = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
 
         double totalRenderTime = 0.0;
         int numRuns = 0;
@@ -69,8 +73,8 @@ public:
                 currentImage[i] = accumulationBuffer[i] / static_cast<float>(sampleCount[i]);
                 currentImage[i] = Utils::Color::linearToGamma(currentImage[i]);
             }
-            clearFrame(clear_color);
-            updateTexture(texture, currentImage, camera.image_width, camera.image_height);
+            clearFrame(clearColor);
+            updateTexture(texture, currentImage, camera.imageWidth, camera.imageHeight);
 
             shader.use();
             glBindVertexArray(VAO);

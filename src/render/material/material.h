@@ -6,17 +6,21 @@
 
 class HitRecord;
 
+// Abstract base class for material properties and behaviors.
 class Material
 {
 public:
     virtual ~Material() = default;
 
+    // Determines if a ray is scattered by the material.
     virtual bool scatter(
         const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered) const = 0;
 
+    // Returns emitted color from the material (default is no emission).
     virtual glm::vec3 emitted() const;
 };
 
+// Lambertian material for diffuse surfaces.
 class Lambertian : public Material
 {
 public:
@@ -26,9 +30,10 @@ public:
         const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered) const override;
 
 private:
-    glm::vec3 albedo;
+    glm::vec3 albedo; // Reflectance color
 };
 
+// Metal material for reflective surfaces.
 class Metal : public Material
 {
 public:
@@ -40,6 +45,7 @@ private:
     glm::vec3 albedo;
 };
 
+// Material for light-emitting surfaces.
 class DiffuseLight : public Material
 {
 public:
@@ -49,5 +55,5 @@ public:
     bool scatter(const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered) const override;
 
 private:
-    glm::vec3 emit;
+    glm::vec3 emit; // Emission color
 };

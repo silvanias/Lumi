@@ -7,12 +7,13 @@
 #include "../interval.h"
 #include "../ray.h"
 
+// Quad class represents a rectangular plane in 3D space.
 class Quad : public Hittable
 {
 public:
     Quad(const glm::vec3 &Q, const glm::vec3 &u, const glm::vec3 &v, std::shared_ptr<Material> mat);
 
-    void set_bounding_box();
+    void setBoundingBox();
     AABB boundingBox() const override;
     bool hit(const Ray &r, Interval ray_t, HitRecord &rec) const override;
     bool inQuad(double alpha, double beta) const;
@@ -30,4 +31,5 @@ private:
     std::shared_ptr<Material> mat;
 };
 
+// Generates a box formed by quads between two points in space.
 std::shared_ptr<HittableList> Box(const glm::vec3 &a, const glm::vec3 &b, std::shared_ptr<Material> mat);

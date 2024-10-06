@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+// Ray class represents a ray in 3D space with an origin and direction.
 class Ray
 {
 public:
@@ -11,6 +12,7 @@ public:
     const glm::vec3 &origin() const { return orig; }
     const glm::vec3 &direction() const { return dir; }
 
+    // Computes the point at parameter t along the ray.
     glm::vec3 at(float t) const
     {
         return orig + (dir * t);

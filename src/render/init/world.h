@@ -7,6 +7,7 @@
 #include "geometry/objects/sphere.h"
 #include "geometry/objects/quad.h"
 
+// Structure representing camera parameters for different scenes.
 struct CamPos
 {
     const glm::vec3 CAMERA_POS;

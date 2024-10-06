@@ -6,23 +6,23 @@ void HittableList::add(std::shared_ptr<Hittable> object)
     bbox = AABB(bbox, object->boundingBox());
 }
 
-bool HittableList::hit(const Ray &r, Interval ray_t, HitRecord &rec) const
+bool HittableList::hit(const Ray &r, Interval rayT, HitRecord &rec) const
 {
-    HitRecord temp_rec;
-    bool hit_anything = false;
-    auto closest_so_far = ray_t.max;
+    HitRecord tempRec;
+    bool hitAnything = false;
+    auto closestSoFar = rayT.max;
 
     for (const auto &object : objects)
     {
-        if (object->hit(r, Interval(ray_t.min, closest_so_far), temp_rec))
+        if (object->hit(r, Interval(rayT.min, closestSoFar), tempRec))
         {
-            hit_anything = true;
-            closest_so_far = temp_rec.t;
-            rec = temp_rec;
+            hitAnything = true;
+            closestSoFar = tempRec.t;
+            rec = tempRec;
         }
     }
 
-    return hit_anything;
+    return hitAnything;
 }
 
 AABB HittableList::boundingBox() const

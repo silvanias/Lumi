@@ -4,11 +4,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
 
+// Utility functions for random number generation and sampling.
 namespace Utils
 {
-    // Random number generation
     namespace Random
     {
+        // Generates a random double between 0.0 and 1.0.
         inline double randomDouble()
         {
             static std::mt19937 generator(std::random_device{}());
@@ -32,28 +33,30 @@ namespace Utils
     // Color conversion utilities
     namespace Color
     {
-        inline double linearToGamma(double linear_color)
+        // Converts linear color to gamma-corrected color.
+        inline double linearToGamma(double linearColor)
         {
-            return (linear_color > 0.0) ? sqrt(linear_color) : 0.0;
+            return (linearColor > 0.0) ? sqrt(linearColor) : 0.0;
         }
 
-        inline glm::vec3 linearToGamma(const glm::vec3 &linear_color)
+        inline glm::vec3 linearToGamma(const glm::vec3 &linearColor)
         {
             return glm::vec3(
-                linearToGamma(linear_color.x),
-                linearToGamma(linear_color.y),
-                linearToGamma(linear_color.z));
+                linearToGamma(linearColor.x),
+                linearToGamma(linearColor.y),
+                linearToGamma(linearColor.z));
         }
     }
 
-    // Sampling utilities
     namespace Sampling
     {
+        // Samples a point within a unit square (0f z component).
         inline glm::vec3 sampleUnitSquare()
         {
             return glm::vec3(Random::randomDouble() - 0.5f, Random::randomDouble() - 0.5f, 0.0f);
         }
 
+        // Samples a point within a unit sphere.
         inline glm::vec3 sampleUnitSphere()
         {
             while (true)
@@ -66,16 +69,17 @@ namespace Utils
             }
         }
 
+        // Samples a point on the hemisphere oriented by the normal.
         inline glm::vec3 randomOnHemisphere(const glm::vec3 &normal)
         {
-            glm::vec3 on_unit_sphere = sampleUnitSphere();
-            return (glm::dot(on_unit_sphere, normal) > 0.0f) ? on_unit_sphere : -on_unit_sphere;
+            glm::vec3 onUnitSphere = sampleUnitSphere();
+            return (glm::dot(onUnitSphere, normal) > 0.0f) ? onUnitSphere : -onUnitSphere;
         }
     }
 
-    // Reflection utilities
     namespace Reflection
     {
+        // Reflects a vector against a normal.
         inline glm::vec3 reflect(const glm::vec3 &vec, const glm::vec3 &normal)
         {
             return vec - 2.0f * glm::dot(vec, normal) * normal;

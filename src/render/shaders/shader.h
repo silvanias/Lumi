@@ -8,6 +8,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+// Shader class handles the compilation and usage of vertex and fragment shaders.
 class Shader
 {
 public:

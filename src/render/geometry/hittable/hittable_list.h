@@ -16,8 +16,14 @@ public:
     explicit HittableList(std::shared_ptr<Hittable> object) { add(object); }
 
     void clear() { objects.clear(); }
+
+    // Adds an object to the list and updates the bounding box.
     void add(std::shared_ptr<Hittable> object);
-    bool hit(const Ray &r, Interval ray_t, HitRecord &rec) const override;
+
+    // Checks if a ray hits any object in the list, updating the hit record.
+    bool hit(const Ray &r, Interval rayT, HitRecord &rec) const override;
+
+    // Returns the axis-aligned bounding box enclosing all objects in the list.
     AABB boundingBox() const override;
 
 private:

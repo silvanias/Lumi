@@ -10,10 +10,10 @@ Quad::Quad(const glm::vec3 &Q, const glm::vec3 &u, const glm::vec3 &v, std::shar
     D = dot(normal, Q);
     basis_scaling_factor = n / glm::dot(n, n);
 
-    set_bounding_box();
+    setBoundingBox();
 }
 
-void Quad::set_bounding_box()
+void Quad::setBoundingBox()
 {
     auto bbox_diagonal1 = AABB(Q, Q + u + v);
     auto bbox_diagonal2 = AABB(Q + u, Q + v);

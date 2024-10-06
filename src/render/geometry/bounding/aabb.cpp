@@ -47,26 +47,26 @@ int AABB::longestAxis() const
         return y.size() > z.size() ? 1 : 2;
 }
 
-bool AABB::hit(const Ray &ray, Interval ray_interval) const
+bool AABB::hit(const Ray &ray, Interval rayInterval) const
 {
-    const glm::vec3 &ray_origin = ray.origin();
-    const glm::vec3 &ray_direction = ray.direction();
+    const glm::vec3 &rayOrigin = ray.origin();
+    const glm::vec3 &rayDirection = ray.direction();
 
     for (int axis = 0; axis < 3; axis++)
     {
-        const Interval &axis_interval = getAxisInterval(axis);
-        const double inverse_direction = 1.0f / ray_direction[axis];
+        const Interval &axisInterval = getAxisInterval(axis);
+        const double inverseDirection = 1.0f / rayDirection[axis];
 
-        auto t0 = (axis_interval.min - ray_origin[axis]) * inverse_direction;
-        auto t1 = (axis_interval.max - ray_origin[axis]) * inverse_direction;
+        auto t0 = (axisInterval.min - rayOrigin[axis]) * inverseDirection;
+        auto t1 = (axisInterval.max - rayOrigin[axis]) * inverseDirection;
 
         if (t0 > t1)
             std::swap(t0, t1);
 
-        ray_interval.min = std::max(ray_interval.min, t0);
-        ray_interval.max = std::min(ray_interval.max, t1);
+        rayInterval.min = std::max(rayInterval.min, t0);
+        rayInterval.max = std::min(rayInterval.max, t1);
 
-        if (ray_interval.max <= ray_interval.min)
+        if (rayInterval.max <= rayInterval.min)
             return false;
     }
     return true;
