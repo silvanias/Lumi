@@ -440,26 +440,42 @@ Applying numerical methods to solve lighting equations.
 
 \section{Technical Description of the System}
 \label{sec:system-description}
+
 \subsection{System Architecture}
+
 \subsubsection{Overview of Core Components and Their Interactions}
-Overview of core components and their interactions in the path tracer.
-\subsubsection{Main Control Loop's Role}
-Main control loop's role in managing rendering operations.
-\subsubsection{Design Principles}
-Design principles behind the modular architecture.
+The path tracer is a sophisticated system that includes several core components, each playing a critical role in the rendering pipeline. The seamless interaction between these components ensures efficient and accurate scene rendering. Key components include the Scene Manager, Camera Module, Renderer, and various support structures. Together, they provide a framework that allows for the simulation of realistic lighting and shadows, handling complex geometries with ease.
+
+\subsubsection{Main Control Loop's Role in Managing Rendering Operations}
+At the heart of the path tracer lies the main control loop, which orchestrates the entire rendering process. It is responsible for coordinating the activities of individual components, ensuring that tasks such as ray generation, intersection testing, shading, and image synthesis are performed in a synchronized manner. This loop not only manages resource allocation and timing but also adapts to dynamic changes within the scene, thus enabling a robust rendering workflow.
+
+\subsubsection{Design Principles Behind the Modular Architecture}
+The system's architecture is founded on modular design principles, which facilitate ease of maintenance and scalability. By encapsulating functionalities within discrete modules, the architecture allows for independent development and testing. This modularity also supports the integration of new features and optimizations with minimal disruption to existing functionalities, ensuring that the system remains adaptable and forward-compatible.
 
 \subsection{Core Components}
-\subsubsection{Scene Manager}
-Object storage and scene graph management.
-\subsubsection{Ray Tracer}
-Ray generation and intersection handling.
-\subsubsection{Camera Module}
-Virtual camera settings and primary ray generation.
-\subsubsection{Shading Engine}
-Shading models and light interaction computation.
-\subsubsection{Acceleration Structures}
-Use of BVH for efficient intersection tests.
 
+\subsubsection{Scene Manager: Object Storage and Scene Graph Management}
+The Scene Manager serves as the repository for all objects within the scene, maintaining an organized structure through a scene graph. This graph efficiently tracks hierarchical relationships and transformations, enabling complex operations such as culling and level-of-detail adjustments. By optimizing data retrieval and updates, the Scene Manager ensures that rendering processes are both swift and accurate.
+
+\subsubsection{Camera Module: Virtual Camera Settings and Primary Ray Generation}
+The Camera Module is tasked with simulating the properties of a virtual camera, defining parameters such as field of view, aperture, and focus distance. It is responsible for generating primary rays that initiate the path tracing process, translating the camera's perspective into digital commands that guide subsequent rendering stages.
+
+\subsubsection{Renderer: Ray Generation and Intersection Handling}
+The Renderer is the engine of the path tracing system, where rays are generated and intersections with scene objects are meticulously handled. It implements algorithms that determine the paths of light as they interact with surfaces, calculating interactions such as reflection, refraction, and absorption. This component ensures that every detail of light behavior is captured, contributing to the generation of photorealistic images.
+
+\subsubsection{Geometry: An Abstraction for Hittable Objects}
+The Geometry component abstracts the complexities of various hittable objects within the scene. By providing a unified interface for diverse geometrical shapes, it facilitates efficient intersection tests and material interactions. This abstraction ensures that developers can introduce new shapes or modify existing ones without altering the core rendering logic.
+
+\subsubsection{Bounding Structures: Use of BVH for Efficient Intersection Tests}
+Bounding Volume Hierarchies (BVH) are employed as acceleration structures to enhance the efficiency of intersection tests. By organizing objects into a tree structure, BVH reduces the number of checks required to find intersections, thereby accelerating rendering times. This strategy is crucial in handling complex scenes with numerous objects, ensuring that performance remains optimal.
+
+\subsubsection{Texture Mapping: Mapping the Progressively Converging Image to an OpenGL Texture by Using OpenGL Shaders}
+Texture Mapping involves applying textures to 3D models, enhancing their surface detail and realism. Using OpenGL shaders, textures are dynamically mapped to objects as the rendered image progressively converges. This technique leverages the power of GPU processing, allowing for real-time updates and intricate visual effects that enhance the visual richness of the rendered scene.
+
+\subsection{Summary of the System and Areas for Software Modelling Enhancements}
+
+\subsubsection{DIP and How It Can Be Used for Flexible Rendering}
+The Dependency Inversion Principle (DIP) is a key consideration for future enhancements, promoting high flexibility within the rendering pipeline. By decoupling high-level components from low-level implementations, DIP allows for more adaptable code that can easily incorporate new algorithms or hardware optimizations. This approach not only facilitates maintenance and testing but also ensures that the system can quickly adapt to evolving industry standards and technological advancements.
 \section{Conclusion}
 \label{sec:conclusion}
 \subsection{Summary of Key Points}
