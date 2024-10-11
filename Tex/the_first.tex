@@ -180,6 +180,7 @@ These mathematical tools form the foundation for implementing various intersecti
 In the following sections, we will explore how these tools are applied to specific geometric primitives, starting with spheres and planes, and then extending to more complex shapes and acceleration structures. By leveraging these vector operations, we can efficiently determine not only if a ray intersects an object, but also the exact point of intersection and the surface properties at that point, which are crucial for accurate light transport simulation in our path tracer.
 
 \subsubsection{Spheres}
+
 A sphere is a common geometric object in ray tracing, defined by its center \(\mathbf{C}\) and radius \(R\). To determine the intersection of a ray with a sphere, we substitute the ray equation \(\mathbf{P}(t) = \mathbf{O} + t\mathbf{D}\) into the sphere's implicit equation:
 \[
     \left\| \mathbf{P}(t) - \mathbf{C} \right\|^2 = R^2
@@ -212,6 +213,17 @@ The discriminant \(b^2 - 4ac\) determines the nature of the intersection:
     \item If \(b^2 - 4ac = 0\), the ray tangentially intersects the sphere at one point.
     \item If \(b^2 - 4ac > 0\), the ray intersects the sphere at two points.
 \end{itemize}
+
+The following image illustrates a ray-sphere intersection:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/ray_sphere_intersection.png}
+    \caption{Ray-sphere intersection demonstration}
+    \label{fig:raysphereintersection}
+\end{figure}
+
+In Figure \ref{fig:raysphereintersection}, we can see a red circle representing a sphere on a white background. Notice the jagged pixelated border. This is because at one ray per pixel, a pixel can only be fully red (intersecting the sphere) or fully white (missing the sphere). We will fix this issue later.
 
 \subsubsection{Planes}
 A plane is defined by a point \(\mathbf{P}_0\) on the plane and a normal vector \(\mathbf{N}\). To find the intersection of a ray with a plane, we use the plane equation:
