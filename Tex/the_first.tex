@@ -225,7 +225,10 @@ The following image illustrates a ray-sphere intersection:
 
 In Figure \ref{fig:raysphereintersection}, we can see a red circle representing a sphere on a white background. Notice the jagged pixelated border. This is because at one ray per pixel, a pixel can only be fully red (intersecting the sphere) or fully white (missing the sphere). We will fix this issue later.
 
+Certainly! I'll incorporate the explanation you've provided for planes and add the image as requested. Here's the revised section:
+
 \subsubsection{Planes}
+
 A plane is defined by a point \(\mathbf{P}_0\) on the plane and a normal vector \(\mathbf{N}\). To find the intersection of a ray with a plane, we use the plane equation:
 \[
     \mathbf{N} \cdot \left( \mathbf{P}(t) - \mathbf{P}_0 \right) = 0
@@ -243,9 +246,64 @@ Solving for \(t\):
 \]
 provided \(\mathbf{N} \cdot \mathbf{D} \neq 0\). If \(\mathbf{N} \cdot \mathbf{D} = 0\), the ray is parallel to the plane and does not intersect it.
 
-\subsubsection{Extension to Object Meshes}
-Intersection tests can be extended to complex object meshes using triangle intersection algorithms.
+The following image illustrates a ray-plane intersection:
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/ray_quad_intersection.png}
+    \caption{Ray-plane intersection demonstration}
+    \label{fig:rayplaneintersection}
+\end{figure}
+
+In Figure \ref{fig:rayplaneintersection}, we can see a ray intersecting a plane (represented as a quad for visualization purposes). The image demonstrates how a ray intersects the plane at a single point. This visual representation helps to understand the mathematical concept described above, where we solve for a single value of \(t\) to find the intersection point.
+
+Certainly! I'll expand on the extension to object meshes, focusing on triangle intersection algorithms. Here's a detailed section on this topic:
+
+\subsubsection{Extension to Object Meshes}
+
+Intersection tests can be extended to complex object meshes using triangle intersection algorithms. This is a crucial step in ray tracing, as most 3D models are represented as meshes composed of triangles.
+
+\paragraph{Triangle Intersection}
+
+The most common method for triangle intersection is the Möller–Trumbore algorithm. This algorithm is efficient and doesn't require precomputation of the triangle plane equation.
+
+Given a ray \(\mathbf{R}(t) = \mathbf{O} + t\mathbf{D}\) and a triangle defined by vertices \(\mathbf{V}0\), \(\mathbf{V}1\), and \(\mathbf{V}_2\), we can express any point on the triangle as:
+
+\[
+    \mathbf{T}(u,v) = (1-u-v)\mathbf{V}0 + u\mathbf{V}1 + v\mathbf{V}_2
+\]
+
+where \(u\) and \(v\) are barycentric coordinates satisfying \(u \geq 0\), \(v \geq 0\), and \(u + v \leq 1\).
+
+The intersection point must satisfy:
+
+\[
+    \mathbf{O} + t\mathbf{D} = (1-u-v)\mathbf{V}0 + u\mathbf{V}1 + v\mathbf{V}_2
+\]
+
+This can be rewritten as a system of linear equations:
+
+\[
+    \begin{bmatrix}
+        -\mathbf{D} & \mathbf{V}1 - \mathbf{V}0 & \mathbf{V}2 - \mathbf{V}0
+    \end{bmatrix}
+    \begin{bmatrix}
+        t \\ u \\ v
+    \end{bmatrix}
+    = \mathbf{O} - \mathbf{V}_0
+\]
+
+Solving this system using Cramer's rule gives us \(t\), \(u\), and \(v\). If \(0 \leq u \leq 1\), \(0 \leq v \leq 1\), \(u + v \leq 1\), and \(t > 0\), then the ray intersects the triangle.
+
+\paragraph{Mesh Intersection}
+
+For a mesh composed of many triangles, we perform the following steps:
+
+For each triangle in the mesh:
+a. Perform the triangle intersection test.
+b. If an intersection is found, store the intersection point and distance.
+
+After testing all triangles, return the closest intersection point (smallest positive \(t\)).
 
 \subsection{Placing Objects into the World}
 \subsubsection{Translation, Rotation, and Scaling}
