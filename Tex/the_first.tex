@@ -6,6 +6,8 @@
 \usepackage{cite}
 \usepackage{hyperref}
 \usepackage{float}
+\usepackage{listings}
+
 
 \title{Path Tracing Renderer Using Monte Carlo Methods}
 \author{Silas Maughan}
@@ -16,7 +18,7 @@
 \maketitle
 
 \begin{abstract}
-    This report presents a study on the implementation of a path tracing renderer using Monte Carlo methods to simulate realistic lighting in a 3D scene. Various sampling techniques and variance reduction methods are explored to enhance image quality and convergence speed. Experimental results demonstrate the effectiveness of these techniques in reducing noise and improving rendering efficiency. The report discusses the mathematical foundations, implementation details, and performance evaluations of different Monte Carlo sampling strategies and variance reduction techniques.
+    This report presents an expository on the foundational mathematical knowledge and implementation of a path tracing renderer using Monte Carlo methods to simulate realistic lighting in a 3D scene. Various sampling techniques and variance reduction methods are explored to enhance image quality and convergence speed. Experimental results demonstrate the effectiveness of these techniques in reducing noise and improving rendering efficiency.
 \end{abstract}
 
 \tableofcontents
@@ -25,57 +27,158 @@
 \label{sec:intro}
 \subsection{Purpose and Scope}
 \subsubsection{Goals of the Document}
-The goal of this document is to explain the implementation of a path tracing renderer using Monte Carlo methods, focusing on different sampling techniques and variance reduction methods to enhance image quality and rendering efficiency.
-\subsubsection{Overview of the Methodological Approach}
-The methodological approach will be outlined and the effectiveness of these techniques will be evaluated through experimental results.
 
+This expository aims to achieve the following objectives:
+\begin{enumerate}
+    \item To provide a comprehensive analysis of the mathematical foundations underlying path tracing, creating a scene, and Monte Carlo integration techniques, bridging the gap between theoretical concepts and practical implementation.
+
+    \item To elucidate the design and implementation of a path tracing system, with particular emphasis on acceleration structures like Bounding Volume Hierarchies (BVH), real-time visualisation with OpenGL and adhering to software modelling principles.
+
+    \item To demonstrate the impact of Monte Carlo methods in path tracing for realistic light simulation, exploring their impact on image quality, convergence rates, and rendering efficiency.
+\end{enumerate}
+Through these objectives, this document seeks to offer a thorough exploration of path tracing, from its mathematical underpinnings to its practical realization in computer graphics, serving as a valuable resource for researchers and practitioners in the field of physically-based rendering.
+
+\subsubsection{Overview of the Methodological Approach}
+This expository adopts a systematic and progressive approach to elucidate the principles and implementation of path tracing. We begin by examining the foundational elements essential to constructing a generic path tracer, including ray representation, intersection testing, and basic shading models. For each of these components, we present the underlying mathematical principles, followed by their corresponding code implementations. This foundational phase establishes the core concepts upon which more advanced techniques are built.
+
+As we introduce each component, we demonstrate its effect on the rendered image, allowing for a clear understanding of how theoretical concepts translate to visual outcomes. This iterative approach provides immediate feedback on the impact of each implemented feature, reinforcing the connection between mathematical principles and their practical applications in computer graphics.
+
+Building upon these foundational elements, we then abstract the entire lighting simulation process into a comprehensive mathematical framework. This transition allows us to view the path tracing problem as an integration task, setting the stage for more advanced techniques. By formulating the lighting problem as an integral, we introduce Monte Carlo methods as a powerful tool for numerical integration, exploring how these statistical techniques can be applied to solve the rendering equation efficiently.
+
+The exposition culminates in the exploration of advanced concepts such as importance sampling and variance reduction, demonstrating how these methods can significantly improve the convergence and quality of the rendered images. Throughout this methodological journey, we maintain a dual focus on theoretical understanding and practical implementation. Each concept is first explored mathematically, then translated into code, and finally evaluated based on its impact on the rendered output.
+
+This approach not only reinforces the connection between theory and practice but also provides a clear pathway for readers to grasp the incremental complexity of path tracing systems. By adhering to this methodology, we aim to provide a comprehensive understanding of path tracing that is both rigorous in its mathematical treatment and grounded in practical application, catering to a diverse audience ranging from computer science students to experienced graphics professionals.
 \subsection{Background}
 \subsubsection{Overview of Ray Tracing}
-Path tracing is a rendering technique used to create realistic images by simulating the way light interacts with objects in a scene. Unlike traditional ray tracing, which traces a single path of light from the eye to the light source, path tracing traces multiple light paths to account for complex interactions like reflection, refraction, and scattering. This report details the implementation of a path tracing renderer using Monte Carlo integration to approximate the rendering equation.
-\subsubsection{Importance in Computer Graphics}
-Path tracing is crucial in computer graphics for achieving photo-realistic rendering, as it accurately simulates the physical behavior of light.
+Ray tracing is a rendering technique that simulates the physical behavior of light to create realistic images. At its core, ray tracing involves tracing the path of light rays as they interact with objects in a virtual scene \cite{Glassner1989}.
+The fundamental concept is to cast rays from a virtual camera through each pixel of an image plane into the scene. These rays interact with objects, potentially reflecting, refracting, or being absorbed, mimicking the behavior of light in the real world \cite{Whitted1980}. By accurately modeling these interactions, ray tracing can produce highly realistic effects such as shadows, reflections, and refractions.
 
+Path tracing, an advanced form of ray tracing, extends this concept by using Monte Carlo methods to solve the rendering equation \cite{Kajiya1986}. It traces numerous light paths through the scene, accounting for multiple bounces and complex light interactions. This approach allows for the accurate simulation of global illumination effects, including soft shadows, color bleeding, and caustics \cite{Veach1997}.
+
+The power of ray tracing and path tracing lies in their ability to naturally handle a wide range of lighting phenomena, producing physically accurate images. However, this accuracy comes at the cost of increased computational complexity, often requiring sophisticated optimization techniques to achieve reasonable rendering times \cite{Pharr2016}.
+\subsubsection{Importance in Computer Graphics}
+Path tracing has become a cornerstone technique in modern computer graphics, particularly in applications demanding high levels of photorealism. Its ability to accurately simulate complex light interactions makes it invaluable in industries such as film and television visual effects, architectural visualization, product design, and video game development \cite{Keller2015}.
+
+In the film industry, path tracing is used to create photorealistic CGI that seamlessly blends with live-action footage \cite{Christensen2018}. Moreover, with the advent of real-time ray tracing in consumer hardware, path tracing techniques are increasingly being adopted in interactive applications like video games, pushing the boundaries of real-time graphics fidelity \cite{Schied2017}.
 \section{Ray Tracing Fundamentals}
 \label{sec:fundamentals}
 
 \subsection{Rays}
-\subsubsection{Definition of a Ray}
-A ray in 3D graphics is an essential construct for simulating the propagation of light through a scene. It is defined by an origin point \(\mathbf{O}\) and a direction vector \(\mathbf{D}\). Mathematically, we can express a point \(\mathbf{P}(t)\) along the ray as:
+\subsubsection{A Ray of Light as a Vector}
+In physics, light is an electromagnetic wave that propagates through space. However, in many scenarios, particularly in computer graphics, we can approximate light behavior using the concept of rays. This simplification, known as geometric optics, is valid when the wavelength of light is much smaller than the objects it interacts with.
+
+A ray of light can be thought of as an idealized narrow beam of light traveling in a straight line. This approximation allows us to model light propagation without dealing with the complexities of wave optics, making it computationally feasible for rendering purposes.
+
+In mathematics, a vector is a quantity that has both magnitude and direction. It can be represented as an arrow in space, defined by its starting point and its direction. This concept aligns perfectly with our need to represent a ray of light, which has a point of origin and a direction of propagation.
+
+Formally, we can define a ray \(\mathbf{R}(t)\) in 3D space using a parametric equation:
+
 \[
-    \mathbf{P}(t) = \mathbf{O} + t\mathbf{D}
-\]
-where \(t\) is a real number parameter. This equation indicates that the ray starts at the origin \(\mathbf{O}\) and extends infinitely in the direction of \(\mathbf{D}\). In practical terms, \(t\) is typically constrained within an interval \([t_{\text{min}}, t_{\text{max}}]\) to define a segment of the ray.
-
-The geometric interpretation of a ray is straightforward: it represents a half-line extending from \(\mathbf{O}\). This formulation is crucial for tracing the path of light as it interacts with objects in a scene.
-
-\subsubsection{Ray-Object Intersection}
-At the core of ray tracing is the need to determine whether a ray intersects an object in the scene. This involves solving for \(t\) when a point \(\mathbf{P}(t)\) on the ray lies on the surface of the object. Each type of object requires a specific intersection test, leading to a variety of mathematical formulations.
-
-\subsection{Vectors and Their Operations}
-Vectors play a pivotal role in ray tracing, representing points, directions, normals, and colors. A 3D vector \(\mathbf{A}\) can be represented as \((A_x, A_y, A_z)\). We will cover essential vector operations that are fundamental to ray tracing.
-
-\subsubsection{Dot Product}
-The dot product of two vectors \(\mathbf{A}\) and \(\mathbf{B}\) is a scalar quantity given by:
-\[
-    \mathbf{A} \cdot \mathbf{B} = A_x B_x + A_y B_y + A_z B_z
-\]
-The dot product is used to calculate the angle between two vectors, determine orthogonality, and compute projections. For example, the angle \(\theta\) between \(\mathbf{A}\) and \(\mathbf{B}\) can be found using:
-\[
-    \cos(\theta) = \frac{\mathbf{A} \cdot \mathbf{B}}{\|\mathbf{A}\| \|\mathbf{B}\|}
+    \mathbf{R}(t) = \mathbf{O} + t\mathbf{D}
 \]
 
-\subsubsection{Cross Product}
+where:
+\begin{itemize}
+    \item \(\mathbf{O}\) is the origin point of the ray (a 3D vector)
+    \item \(\mathbf{D}\) is the direction vector of the ray (a 3D unit vector)
+    \item \(t\) is a scalar parameter (\(t \geq 0\))
+\end{itemize}
+
+This equation describes all points along the ray, starting from the origin and extending infinitely in the direction of \(\mathbf{D}\). In practice, we often constrain \(t\) to an interval \([t{\text{min}}, t{\text{max}}]\) to define a specific segment of the ray.
+
+\subsubsection{Definition in Code}
+
+In code, we can represent this mathematical concept using a Ray class and an Interval class. Here's how these classes are implemented:
+
+\begin{lstlisting}[language=C++]
+class Ray
+{
+public:
+    Ray() = default;
+    Ray(const glm::vec3 &origin, const glm::vec3 &direction) : orig(origin), dir(direction) {}
+
+    const glm::vec3 &origin() const { return orig; }
+    const glm::vec3 &direction() const { return dir; }
+
+    glm::vec3 at(float t) const
+    {
+        return orig + (dir * t);
+    }
+
+private:
+    glm::vec3 orig;
+    glm::vec3 dir;
+};
+
+class Interval
+{
+public:
+    double min;
+    double max;
+
+    Interval() : min(+INFINITY), max(-INFINITY) {}
+    Interval(double min, double max) : min(min), max(max) {}
+
+    // ... (other methods as in your provided code)
+};
+\end{lstlisting}
+
+The Ray class encapsulates the origin and direction of the ray, while the Interval class can be used to represent the valid range of the parameter \(t\). The at method in the Ray class implements the parametric equation, allowing us to compute points along the ray.
+
+This representation allows us to efficiently model light paths in our path tracing system, forming the foundation for intersection tests and light transport calculations.
+
+\subsection{Intersection Testing}
+
+Having established the mathematical and programmatic representation of a ray of light, we now turn our attention to determining how these rays interact with objects in our scene. Intersection testing is a crucial component of ray tracing, allowing us to simulate the behavior of light as it encounters various surfaces. To perform these tests efficiently, we leverage the geometric properties of vectors.
+
+\subsubsection{Mathematical Tools}
+
+Two fundamental vector operations are essential for intersection testing: the dot product and the cross product.
+
+\paragraph{Dot Product}
+The dot product of two vectors \(\mathbf{A}\) and \(\mathbf{B}\) is a scalar quantity defined as:
+\[
+    \mathbf{A} \cdot \mathbf{B} = Ax Bx + Ay By + Az Bz
+\]
+
+This operation has several useful properties for intersection testing:
+
+\begin{itemize}
+    \item It can be used to calculate the angle between two vectors:
+          \[
+              \cos(\theta) = \frac{\mathbf{A} \cdot \mathbf{B}}{\|\mathbf{A}\| \|\mathbf{B}\|}
+          \]
+    \item It allows us to determine orthogonality (when the dot product is zero)
+    \item It enables the computation of vector projections
+\end{itemize}
+
+In the context of ray tracing, the dot product is particularly useful for determining the angle between a ray and a surface normal, which is crucial for calculating reflection and refraction.
+
+\paragraph{Cross Product}
 The cross product of two vectors \(\mathbf{A}\) and \(\mathbf{B}\) results in a third vector \(\mathbf{C}\) that is perpendicular to both:
 \[
-    \mathbf{C} = \mathbf{A} \times \mathbf{B} = \left( A_y B_z - A_z B_y, A_z B_x - A_x B_z, A_x B_y - A_y B_x \right)
+    \mathbf{C} = \mathbf{A} \times \mathbf{B} = \left( Ay Bz - Az By, Az Bx - Ax Bz, Ax By - Ay Bx \right)
 \]
-The magnitude of \(\mathbf{C}\) is given by:
+
+The magnitude of the resulting vector is given by:
 \[
     \|\mathbf{C}\| = \|\mathbf{A}\| \|\mathbf{B}\| \sin(\theta)
 \]
 where \(\theta\) is the angle between \(\mathbf{A}\) and \(\mathbf{B}\).
 
-\subsection{Intersection Calculations}
+In intersection testing, the cross product serves several important purposes:
+
+\begin{itemize}
+    \item It can be used to compute surface normals for triangles or polygons
+    \item It helps in determining the orientation of surfaces relative to the ray
+    \item It's useful in calculating barycentric coordinates for triangle intersection tests
+    \item It can be employed to find perpendicular vectors, which is helpful in constructing coordinate systems for shading calculations
+\end{itemize}
+
+These mathematical tools form the foundation for implementing various intersection tests. For instance, when testing ray-triangle intersections, we can use the cross product to compute the triangle's normal and the dot product to determine if the ray is facing the correct side of the triangle. Similarly, for ray-plane intersections, the dot product helps us calculate the distance along the ray at which the intersection occurs.
+
+In the following sections, we will explore how these tools are applied to specific geometric primitives, starting with spheres and planes, and then extending to more complex shapes and acceleration structures. By leveraging these vector operations, we can efficiently determine not only if a ray intersects an object, but also the exact point of intersection and the surface properties at that point, which are crucial for accurate light transport simulation in our path tracer.
+
 \subsubsection{Spheres}
 A sphere is a common geometric object in ray tracing, defined by its center \(\mathbf{C}\) and radius \(R\). To determine the intersection of a ray with a sphere, we substitute the ray equation \(\mathbf{P}(t) = \mathbf{O} + t\mathbf{D}\) into the sphere's implicit equation:
 \[
@@ -128,6 +231,59 @@ Solving for \(t\):
 \]
 provided \(\mathbf{N} \cdot \mathbf{D} \neq 0\). If \(\mathbf{N} \cdot \mathbf{D} = 0\), the ray is parallel to the plane and does not intersect it.
 
+\subsubsection{Extension to Object Meshes}
+Intersection tests can be extended to complex object meshes using triangle intersection algorithms.
+
+
+\subsection{Placing Objects into the World}
+\subsubsection{Translation, Rotation, and Scaling}
+Objects in a 3D scene can be manipulated using transformations such as translation, rotation, and scaling. These transformations are represented by matrices.
+
+Transformation matrices allow for the linear transformation of vectors. Given a vector \(\mathbf{v}\) and a transformation matrix \(\mathbf{M}\), the transformed vector \(\mathbf{v}'\) is:
+\[
+    \mathbf{v}' = \mathbf{M} \mathbf{v}
+\]
+Combining multiple transformations is achieved by matrix multiplication.
+
+*Translation:* A translation matrix \(\mathbf{T}\) moves an object by a vector \(\mathbf{d} = (d_x, d_y, d_z)\):
+\[
+    \mathbf{T} = \begin{pmatrix}
+        1 & 0 & 0 & d_x \\
+        0 & 1 & 0 & d_y \\
+        0 & 0 & 1 & d_z \\
+        0 & 0 & 0 & 1
+    \end{pmatrix}
+\]
+
+*Rotation:* A rotation matrix \(\mathbf{R}\) rotates an object around an axis. For example, a rotation around the \(z\)-axis by an angle \(\theta\) is given by:
+\[
+    \mathbf{R}_z(\theta) = \begin{pmatrix}
+        \cos \theta & -\sin \theta & 0 & 0 \\
+        \sin \theta & \cos \theta  & 0 & 0 \\
+        0           & 0            & 1 & 0 \\
+        0           & 0            & 0 & 1
+    \end{pmatrix}
+\]
+
+*Scaling:* A scaling matrix \(\mathbf{S}\) scales an object by factors \(s_x\), \(s_y\), and \(s_z\):
+\[
+    \mathbf{S} = \begin{pmatrix}
+        s_x & 0   & 0   & 0 \\
+        0   & s_y & 0   & 0 \\
+        0   & 0   & s_z & 0 \\
+        0   & 0   & 0   & 1
+    \end{pmatrix}
+\]
+
+
+\subsubsection{Technical Implementation}
+*Transforming Objects and Rays:* Applying matrix operations to objects and rays in the scene ensures consistent transformations. The composite matrix \(\mathbf{M}\) for a series of transformations is:
+\[
+    \mathbf{M} = \mathbf{T} \mathbf{R} \mathbf{S}
+\]
+
+*Applying Transformations to the Scene:* All elements in the scene, including geometry and light sources, are transformed using composite matrices to maintain spatial coherence.
+
 \subsection{Color and Shading Models}
 \subsubsection{Light and Material Interaction}
 The appearance of objects in a scene is influenced by how they interact with light. When light strikes a surface, it can be absorbed, reflected, or transmitted. These interactions are governed by the material properties of the surface.
@@ -176,60 +332,8 @@ Color models in code often represent colors as vectors with three components: re
 
 *Specular Reflectance:* For specular materials, the direction of the reflected ray is computed using the reflection equation. This is crucial for simulating shiny surfaces such as metals and mirrors.
 
-\subsection{Linear Transformations}
-\subsubsection{Translation, Rotation, and Scaling}
-Objects in a 3D scene can be manipulated using transformations such as translation, rotation, and scaling. These transformations are represented by matrices.
-
-*Translation:* A translation matrix \(\mathbf{T}\) moves an object by a vector \(\mathbf{d} = (d_x, d_y, d_z)\):
-\[
-    \mathbf{T} = \begin{pmatrix}
-        1 & 0 & 0 & d_x \\
-        0 & 1 & 0 & d_y \\
-        0 & 0 & 1 & d_z \\
-        0 & 0 & 0 & 1
-    \end{pmatrix}
-\]
-
-*Rotation:* A rotation matrix \(\mathbf{R}\) rotates an object around an axis. For example, a rotation around the \(z\)-axis by an angle \(\theta\) is given by:
-\[
-    \mathbf{R}_z(\theta) = \begin{pmatrix}
-        \cos \theta & -\sin \theta & 0 & 0 \\
-        \sin \theta & \cos \theta  & 0 & 0 \\
-        0           & 0            & 1 & 0 \\
-        0           & 0            & 0 & 1
-    \end{pmatrix}
-\]
-
-*Scaling:* A scaling matrix \(\mathbf{S}\) scales an object by factors \(s_x\), \(s_y\), and \(s_z\):
-\[
-    \mathbf{S} = \begin{pmatrix}
-        s_x & 0   & 0   & 0 \\
-        0   & s_y & 0   & 0 \\
-        0   & 0   & s_z & 0 \\
-        0   & 0   & 0   & 1
-    \end{pmatrix}
-\]
-
-\subsubsection{Matrix Representations}
-Transformation matrices allow for the linear transformation of vectors. Given a vector \(\mathbf{v}\) and a transformation matrix \(\mathbf{M}\), the transformed vector \(\mathbf{v}'\) is:
-\[
-    \mathbf{v}' = \mathbf{M} \mathbf{v}
-\]
-Combining multiple transformations is achieved by matrix multiplication.
-
-\subsubsection{Technical Implementation}
-*Transforming Objects and Rays:* Applying matrix operations to objects and rays in the scene ensures consistent transformations. The composite matrix \(\mathbf{M}\) for a series of transformations is:
-\[
-    \mathbf{M} = \mathbf{T} \mathbf{R} \mathbf{S}
-\]
-
-*Applying Transformations to the Scene:* All elements in the scene, including geometry and light sources, are transformed using composite matrices to maintain spatial coherence.
-
-
-
-
-\section{Advanced Techniques in Ray Tracing}
-\label{sec:advanced}
+\section{Camera Dynamics}
+\label{sec:camera}
 
 \subsection{Camera and Viewing}
 \label{subsec:camera-viewing}
@@ -272,46 +376,7 @@ The viewport width is adjusted according to the aspect ratio (\(\text{aspectRati
 \paragraph{Perspective Projection}
 To generate rays from the camera through each pixel, we calculate the position of each pixel in the camera's coordinate system. The pixel positions are offset from a reference point (the upper-left corner of the viewport) by the basis vectors \(\mathbf{u}\) and \(\mathbf{v}\).
 
-\paragraph{Implementation in Camera Class}
-The `Camera` class encapsulates the logic for positioning and orienting the camera, as well as generating rays through the pixels.
-
-\begin{verbatim}
-class Camera
-{
-public:
-    Camera(unsigned int imageWidth, unsigned int imageHeight, const glm::vec3 &pos, const glm::vec3 &focalPoint, const glm::vec3 &up, float vertFov, unsigned int samplesPerPixel, unsigned int maxDepth);
-    Camera(unsigned int imageWidth, unsigned int imageHeight, const CamPos &camPos, unsigned int samplesPerPixel, unsigned int maxDepth);
-
-    void render(const HittableList &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount);
-
-    int image_width;
-    int image_height;
-
-private:
-    glm::vec3 center;
-    glm::vec3 look_at;
-    glm::vec3 vup;
-    float vert_fov;
-    int sample_per_pixel_per_frame;
-    int sqrt_sample_per_pixel_per_frame;
-    float recip_sqrt_sppf;
-    int max_depth;
-
-    glm::vec3 pixel00_loc;
-    glm::vec3 pixel_delta_u;
-    glm::vec3 pixel_delta_v;
-    glm::vec3 u;
-    glm::vec3 v;
-    glm::vec3 w;
-
-    void initialize();
-    Ray getRandomRay(int x, int y) const;
-    Ray getRandomStratifiedRay(glm::vec3 pixelCenter, int gridX, int gridY) const;
-    glm::vec3 rayColor(const Ray &r, const HittableList &world, int depth) const;
-};
-\end{verbatim}
-
-The `Camera` class includes member variables to store the camera's position, orientation, and configuration parameters.
+\subsubsection{Technical Implementation}
 
 \paragraph{Initialization and Basis Vector Calculation}
 The `initialize` method sets up the camera's coordinate system using the basis vectors:
@@ -353,144 +418,93 @@ Ray Camera::getRandomRay(int x, int y) const {
 }
 \end{verbatim}
 
-This method uses the basis vectors to compute the direction of the rays passing through each pixel, incorporating random offsets to achieve anti-aliasing.
+This method uses the basis vectors to compute the direction of the rays passing through each pixel, incorporating random offsets to achieve anti-aliasing. This process ensures that each pixel's color is the result of multiple samples, reducing aliasing and producing a smoother image.
 
-\paragraph{Rendering}
-The `render` method generates rays for each pixel and computes the color by tracing these rays through the scene. The final image is accumulated and averaged over multiple samples for anti-aliasing.
-
-\begin{verbatim}
-void Camera::render(const HittableList &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount) {
-    for (int y = 0; y < image_height; ++y) {
-        for (int x = 0; x < image_width; ++x) {
-            glm::vec3 color(0.0f);
-            for (int s = 0; s < sample_per_pixel_per_frame; ++s) {
-                Ray r = getRandomRay(x, y);
-                color += rayColor(r, world, max_depth);
-            }
-            accumulationBuffer[y * image_width + x] += color;
-            sampleCount[y * image_width + x] += sample_per_pixel_per_frame;
-            glm::vec3 averagedColor = accumulationBuffer[y * image_width + x] / float(sampleCount[y * image_width + x]);
-            // Store averagedColor in the image buffer
-        }
-    }
-}
-\end{verbatim}
-
-This process ensures that each pixel's color is the result of multiple samples, reducing aliasing and producing a smoother image.
-
-\paragraph{Geometric Interpretation and Linear Transformations}
-
-\subparagraph{Changing Basis}
-The camera's view can be thought of as a change of basis. The world coordinates are transformed into the camera's coordinate system defined by the basis vectors \(\mathbf{u}\), \(\mathbf{v}\), and \(\mathbf{w}\).
-
-\subparagraph{Linear Transformations}
-Linear transformations, represented by matrices, are used to position and orient the camera. The transformation from world coordinates to camera coordinates involves translating the camera to the origin and rotating the basis vectors to align with the standard axes.
-
-\subparagraph{Concept of Vector Space}
-The camera’s coordinate system forms a vector space where the basis vectors \(\mathbf{u}\), \(\mathbf{v}\), and \(\mathbf{w}\) span the space. The transformations applied to these vectors ensure linear independence, meaning they form a valid coordinate system for the camera.
-
-\subparagraph{Systems of Linear Equations}
-In rendering, solving systems of linear equations can be used to determine intersections of rays with objects, transformations, and more. These systems can be represented and solved using matrix methods and vector operations.
-
-In conclusion, the `Camera` class in ray tracing leverages concepts from linear algebra such as basis vectors, linear transformations, and vector spaces to simulate the projection of rays through an image plane. This allows for accurate positioning, orientation, and rendering of the scene from the camera's perspective.
-\subsection{Acceleration Structures}
-\subsubsection{Bounding Volume Hierarchies (BVH)}
+\section{Acceleration Structures}
+\label{sec:acceleration-structures}
+\subsection{Bounding Volume Hierarchies (BVH)}
+\subsubsection{Overview of BVH}
 An advanced structure for efficient intersection tests.
 \subsubsection{Technical Implementation}
 \begin{itemize}
     \item \textbf{Efficient Ray-Object Intersection Tests:} Using BVH for faster intersection calculations.
     \item \textbf{Building and Traversing BVH:} Methods for constructing and navigating BVH structures.
 \end{itemize}
+\subsubsection{Algorithmic Analysis}
+Performance analysis of BVH algorithms for various scene complexities.
 
-\subsection{Anti-Aliasing and Sampling}
-\subsubsection{Aliasing Problems in Rendering}
-Understanding the impact of aliasing and methods to mitigate it.
-\subsubsection{Supersampling and Adaptive Sampling}
-Techniques to enhance image quality.
-\subsubsection{Technical Implementation}
-\begin{itemize}
-    \item \textbf{Implementing Supersampling:} Methods for applying supersampling in rendering.
-\end{itemize}
+\section{Monte Carlo Methods for Ray Tracing}
+\label{sec:monte-carlo}
 
-\section{Mathematical Methods for Ray Tracing}
-\label{sec:math-methods}
 \subsection{Probability and Monte Carlo Methods}
-\subsubsection{Random Sampling Techniques}
-Utilizing stochastic methods to improve sampling efficiency.
-\subsubsection{Basic Probability Concepts}
-Foundational principles applicable to Monte Carlo methods.
+\subsubsection{Improved Random Sampling}
+Stochastic methods improve sampling efficiency in rendering.
+
 \subsubsection{Monte Carlo Integration}
-Using random sampling to approximate integrals.
-\subsubsection{Technical Implementation}
-\begin{itemize}
-    \item \textbf{Path Tracing:} Implementing Monte Carlo techniques in path tracing.
-    \item \textbf{Importance Sampling and Russian Roulette:} Advanced Monte Carlo techniques to enhance efficiency.
-\end{itemize}
+Using random sampling to approximate integrals in light transport.
+
+\subsubsection{Importance Sampling}
+Advanced sampling techniques enhance efficiency and image quality.
 
 \subsection{Integration for Lighting Models}
 \subsubsection{Radiance and Light Transport Equations}
-Mathematical models for light behavior.
+Mathematical models for light behavior in rendering.
+
 \subsubsection{Numerical Integration Techniques}
 Applying numerical methods to solve lighting equations.
+
 \subsubsection{Technical Implementation}
-\begin{itemize}
-    \item \textbf{Implementing Global Illumination:} Techniques for comprehensive lighting calculations.
-    \item \textbf{Integrating Direct and Indirect Lighting:} Methods to account for all lighting contributions.
-\end{itemize}
+Implementing global illumination and integrating direct and indirect lighting.
 
 \section{Technical Description of the System}
 \label{sec:system-description}
 
 \subsection{System Architecture}
-
 \subsubsection{Overview of Core Components and Their Interactions}
-The path tracer is a sophisticated system that includes several core components, each playing a critical role in the rendering pipeline. The seamless interaction between these components ensures efficient and accurate scene rendering. Key components include the Scene Manager, Camera Module, Renderer, and various support structures. Together, they provide a framework that allows for the simulation of realistic lighting and shadows, handling complex geometries with ease.
+Core components such as Scene Manager, Camera Module, and Renderer interact seamlessly to simulate realistic lighting.
 
 \subsubsection{Main Control Loop's Role in Managing Rendering Operations}
-At the heart of the path tracer lies the main control loop, which orchestrates the entire rendering process. It is responsible for coordinating the activities of individual components, ensuring that tasks such as ray generation, intersection testing, shading, and image synthesis are performed in a synchronized manner. This loop not only manages resource allocation and timing but also adapts to dynamic changes within the scene, thus enabling a robust rendering workflow.
+The main control loop orchestrates rendering, coordinating ray generation, shading, and image synthesis.
 
 \subsubsection{Design Principles Behind the Modular Architecture}
-The system's architecture is founded on modular design principles, which facilitate ease of maintenance and scalability. By encapsulating functionalities within discrete modules, the architecture allows for independent development and testing. This modularity also supports the integration of new features and optimizations with minimal disruption to existing functionalities, ensuring that the system remains adaptable and forward-compatible.
+Modular design facilitates maintenance, scalability, and integration of new features.
 
 \subsection{Core Components}
-
 \subsubsection{Scene Manager: Object Storage and Scene Graph Management}
-The Scene Manager serves as the repository for all objects within the scene, maintaining an organized structure through a scene graph. This graph efficiently tracks hierarchical relationships and transformations, enabling complex operations such as culling and level-of-detail adjustments. By optimizing data retrieval and updates, the Scene Manager ensures that rendering processes are both swift and accurate.
+The Scene Manager organizes objects in a scene graph, optimizing rendering operations.
 
 \subsubsection{Camera Module: Virtual Camera Settings and Primary Ray Generation}
-The Camera Module is tasked with simulating the properties of a virtual camera, defining parameters such as field of view, aperture, and focus distance. It is responsible for generating primary rays that initiate the path tracing process, translating the camera's perspective into digital commands that guide subsequent rendering stages.
+Simulates camera properties and generates primary rays for rendering.
 
 \subsubsection{Renderer: Ray Generation and Intersection Handling}
-The Renderer is the engine of the path tracing system, where rays are generated and intersections with scene objects are meticulously handled. It implements algorithms that determine the paths of light as they interact with surfaces, calculating interactions such as reflection, refraction, and absorption. This component ensures that every detail of light behavior is captured, contributing to the generation of photorealistic images.
+Handles ray generation and calculates light interactions with surfaces.
 
 \subsubsection{Geometry: An Abstraction for Hittable Objects}
-The Geometry component abstracts the complexities of various hittable objects within the scene. By providing a unified interface for diverse geometrical shapes, it facilitates efficient intersection tests and material interactions. This abstraction ensures that developers can introduce new shapes or modify existing ones without altering the core rendering logic.
+Provides a unified interface for diverse geometrical shapes.
 
 \subsubsection{Bounding Structures: Use of BVH for Efficient Intersection Tests}
-Bounding Volume Hierarchies (BVH) are employed as acceleration structures to enhance the efficiency of intersection tests. By organizing objects into a tree structure, BVH reduces the number of checks required to find intersections, thereby accelerating rendering times. This strategy is crucial in handling complex scenes with numerous objects, ensuring that performance remains optimal.
+Employs BVH for accelerated intersection tests, enhancing performance.
 
-\subsubsection{Texture Mapping: Mapping the Progressively Converging Image to an OpenGL Texture by Using OpenGL Shaders}
-Texture Mapping involves applying textures to 3D models, enhancing their surface detail and realism. Using OpenGL shaders, textures are dynamically mapped to objects as the rendered image progressively converges. This technique leverages the power of GPU processing, allowing for real-time updates and intricate visual effects that enhance the visual richness of the rendered scene.
+\subsection{Utilising OpenGL for Visualising Convergence}
+\subsubsection{Texture Mapping: Mapping the Progressively Converging Image}
+Textures are mapped to 3D models using OpenGL shaders, enhancing visual detail.
 
-\subsection{Summary of the System and Areas for Software Modelling Enhancements}
-
-\subsubsection{DIP and How It Can Be Used for Flexible Rendering}
-The Dependency Inversion Principle (DIP) is a key consideration for future enhancements, promoting high flexibility within the rendering pipeline. By decoupling high-level components from low-level implementations, DIP allows for more adaptable code that can easily incorporate new algorithms or hardware optimizations. This approach not only facilitates maintenance and testing but also ensures that the system can quickly adapt to evolving industry standards and technological advancements.
 \section{Conclusion}
 \label{sec:conclusion}
 \subsection{Summary of Key Points}
-Monte Carlo methods are effective for path tracing and realistic image synthesis. Importance sampling and stratified sampling significantly improve image quality and convergence speed. Variance reduction techniques further enhance the rendering efficiency by reducing noise.
+Monte Carlo methods effectively enhance path tracing and image synthesis, improving quality and efficiency.
+
 \subsection{Future Work}
-Future work could explore more advanced sampling strategies, real-time rendering optimizations, and additional variance reduction techniques.
+Future exploration of advanced sampling strategies and optimizations for real-time rendering.
+
 \subsection{Final Thoughts}
-The implementation of these techniques in a practical renderer highlights the importance of statistical methods in achieving high-quality, efficient rendering solutions.
+Statistical methods are crucial for high-quality rendering solutions.
 
 \section{References}
 \label{sec:references}
-\subsection{Books and Articles}
 \bibliographystyle{plain}
 \bibliography{references}
-\subsection{Online Resources}
+
 
 \appendix
 \section{Detailed Mathematical Derivations}
