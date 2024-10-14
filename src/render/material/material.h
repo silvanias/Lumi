@@ -14,7 +14,7 @@ public:
 
     // Determines if a ray is scattered by the material.
     virtual bool scatter(
-        const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, double &pdf) const
+        const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, float &pdf) const
     {
         return false;
     };
@@ -36,7 +36,7 @@ public:
     explicit Lambertian(const glm::vec3 &albedo);
 
     bool scatter(
-        const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, double &pdf) const override;
+        const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, float &pdf) const override;
 
     double scatteringPDF(
         const Ray &r_in, const HitRecord &rec, const Ray &scattered) const;
@@ -51,7 +51,7 @@ class Metal : public Material
 public:
     explicit Metal(const glm::vec3 &albedo);
 
-    bool scatter(const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, double &pdf) const override;
+    bool scatter(const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, float &pdf) const override;
 
 private:
     glm::vec3 albedo;
@@ -64,7 +64,7 @@ public:
     DiffuseLight(const glm::vec3 &emit);
 
     glm::vec3 emitted() const override;
-    bool scatter(const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, double &pdf) const override;
+    bool scatter(const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, float &pdf) const override;
 
 private:
     glm::vec3 emit; // Emission color

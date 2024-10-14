@@ -9,7 +9,7 @@ glm::vec3 Material::emitted() const
 Lambertian::Lambertian(const glm::vec3 &albedo) : albedo(albedo) {}
 
 bool Lambertian::scatter(
-    const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, double &pdf) const
+    const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, float &pdf) const
 {
     ONB uvw(rec.normal);
     auto scatter_direction = uvw.transform(Utils::Random::randomCosineDirection());
@@ -33,7 +33,7 @@ double Lambertian::scatteringPDF(
 Metal::Metal(const glm::vec3 &albedo) : albedo(albedo) {}
 
 bool Metal::scatter(
-    const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, double &pdf) const
+    const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, float &pdf) const
 {
     glm::vec3 reflected = reflect(r_in.direction(), rec.normal);
     scattered = Ray(rec.point, reflected);
@@ -49,7 +49,7 @@ glm::vec3 DiffuseLight::emitted() const
 }
 
 bool DiffuseLight::scatter(
-    const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, double &pdf) const
+    const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, float &pdf) const
 {
     return false;
 }
