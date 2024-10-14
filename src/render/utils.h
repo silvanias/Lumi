@@ -3,6 +3,8 @@
 #include <random>
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
+#include <numbers>
+#include "camera/onb.h"
 
 // Utility functions for random number generation and sampling.
 namespace Utils
@@ -27,6 +29,19 @@ namespace Utils
         inline int randomInt(int min, int max)
         {
             return int(randomDouble(min, max + 1));
+        }
+
+        inline glm::vec3 randomCosineDirection()
+        {
+            auto r1 = randomDouble();
+            auto r2 = randomDouble();
+
+            auto phi = 2 * std::numbers::pi * r1;
+            auto x = std::cos(phi) * std::sqrt(r2);
+            auto y = std::sin(phi) * std::sqrt(r2);
+            auto z = std::sqrt(1 - r2);
+
+            return glm::vec3(x, y, z);
         }
     }
 

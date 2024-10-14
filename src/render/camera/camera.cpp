@@ -82,12 +82,16 @@ glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, int depth) c
 
     Ray scattered;
     glm::vec3 attenuation;
+    double pdfValue;
     glm::vec3 colorFromEmission = rec.mat->emitted();
 
-    if (!rec.mat->scatter(r, rec, attenuation, scattered))
+    if (!rec.mat->scatter(r, rec, attenuation, scattered, pdfValue))
         return colorFromEmission;
 
-    glm::vec3 colorFromScatter = attenuation * rayColor(scattered, world, depth - 1);
+    float scattering_pdf = rec.mat->scatteringPDF(r, rec, scattered);
+    float pdf_value = scattering_pdf;
+
+    glm::vec3 colorFromScatter = (attenuation * scattering_pdf * rayColor(scattered, world, depth - 1)) / pdf_value;
     return colorFromScatter + colorFromEmission;
 }
 
