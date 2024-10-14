@@ -6,8 +6,16 @@
 \usepackage{cite}
 \usepackage{hyperref}
 \usepackage{float}
+\usepackage{xcolor}
 \usepackage{listings}
+\usepackage{minted}
 
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,   % Color of internal links (e.g., toc, sections, etc.)
+    citecolor=black,   % Color of citation links (e.g., bibliography)
+    urlcolor=black     % Color of external links (e.g., URLs)
+}
 
 \title{Path Tracing Renderer Using Monte Carlo Methods}
 \author{Silas Maughan}
@@ -16,13 +24,12 @@
 \begin{document}
 
 \maketitle
-
 \begin{abstract}
     This report presents an expository on the foundational mathematical knowledge and implementation of a path tracing renderer using Monte Carlo methods to simulate realistic lighting in a 3D scene. Various sampling techniques and variance reduction methods are explored to enhance image quality and convergence speed. Experimental results demonstrate the effectiveness of these techniques in reducing noise and improving rendering efficiency.
 \end{abstract}
 
 \tableofcontents
-
+\break
 \section{Introduction}
 \label{sec:intro}
 \subsection{Purpose and Scope}
@@ -30,24 +37,23 @@
 
 This expository aims to achieve the following objectives:
 \begin{enumerate}
-    \item To provide a comprehensive analysis of the mathematical foundations underlying path tracing, creating a scene, and Monte Carlo integration techniques, bridging the gap between theoretical concepts and practical implementation.
+    \item To provide a comprehensive analysis of the \textit{mathematical} foundations underlying path tracing, creating a scene, and Monte Carlo integration techniques.
 
-    \item To elucidate the design and implementation of a path tracing system, with particular emphasis on acceleration structures like Bounding Volume Hierarchies (BVH), real-time visualisation with OpenGL and adhering to software modelling principles.
+    \item To demonstrate the \textit{visual} impact of Monte Carlo methods in path tracing for realistic light simulation, exploring their impact on image fidelity, convergence rates, and rendering efficiency.
 
-    \item To demonstrate the impact of Monte Carlo methods in path tracing for realistic light simulation, exploring their impact on image quality, convergence rates, and rendering efficiency.
+    \item To elucidate the \textit{design} and implementation of a path tracing system, with particular emphasis on acceleration structures like Bounding Volume Hierarchies (BVH), real-time visualisation with OpenGL and adhering to software modelling principles.
 \end{enumerate}
+
 Through these objectives, this document seeks to offer a thorough exploration of path tracing, from its mathematical underpinnings to its practical realization in computer graphics, serving as a valuable resource for researchers and practitioners in the field of physically-based rendering.
 
 \subsubsection{Overview of the Methodological Approach}
-This expository adopts a systematic and progressive approach to elucidate the principles and implementation of path tracing. We begin by examining the foundational elements essential to constructing a generic path tracer, including ray representation, intersection testing, and basic shading models. For each of these components, we present the underlying mathematical principles, followed by their corresponding code implementations. This foundational phase establishes the core concepts upon which more advanced techniques are built.
+This expository adopts a progressive approach to the principles and implementation of path tracing.
+We begin by examining the foundational elements of a generic path tracer, including ray representation, intersection testing, and basic shading models. For each of these components, we present the underlying mathematical principles, followed by their corresponding code implementations. This foundational phase establishes the core concepts upon which more advanced techniques are built.
 
-As we introduce each component, we demonstrate its effect on the rendered image, allowing for a clear understanding of how theoretical concepts translate to visual outcomes. This iterative approach provides immediate feedback on the impact of each implemented feature, reinforcing the connection between mathematical principles and their practical applications in computer graphics.
+Building upon these foundational elements, we then abstract the entire lighting simulation process into a comprehensive mathematical framework. This transition allows us to view the path tracing problem as an integration task. We introduce Monte Carlo methods as a powerful tool for numerical integration, exploring how these statistical techniques can be applied to solve the rendering equation efficiently.
 
-Building upon these foundational elements, we then abstract the entire lighting simulation process into a comprehensive mathematical framework. This transition allows us to view the path tracing problem as an integration task, setting the stage for more advanced techniques. By formulating the lighting problem as an integral, we introduce Monte Carlo methods as a powerful tool for numerical integration, exploring how these statistical techniques can be applied to solve the rendering equation efficiently.
+As we introduce each component, we demonstrate its effect on the rendered image, allowing for a clear understanding of how theoretical concepts translate to visual outcomes. This iterative approach provides immediate feedback on the impact of each implemented feature, reinforcing the connection between mathematical principles and their applications in computer graphics.
 
-The exposition culminates in the exploration of advanced concepts such as importance sampling and variance reduction, demonstrating how these methods can significantly improve the convergence and quality of the rendered images. Throughout this methodological journey, we maintain a dual focus on theoretical understanding and practical implementation. Each concept is first explored mathematically, then translated into code, and finally evaluated based on its impact on the rendered output.
-
-This approach not only reinforces the connection between theory and practice but also provides a clear pathway for readers to grasp the incremental complexity of path tracing systems. By adhering to this methodology, we aim to provide a comprehensive understanding of path tracing that is both rigorous in its mathematical treatment and grounded in practical application, catering to a diverse audience ranging from computer science students to experienced graphics professionals.
 \subsection{Background}
 \subsubsection{Overview of Ray Tracing}
 Ray tracing is a rendering technique that simulates the physical behavior of light to create realistic images. At its core, ray tracing involves tracing the path of light rays as they interact with objects in a virtual scene \cite{Glassner1989}.
@@ -90,17 +96,13 @@ This equation describes all points along the ray, starting from the origin and e
 
 In code, we can represent this mathematical concept using a Ray class and an Interval class. Here's how these classes are implemented:
 
-\begin{lstlisting}[language=C++]
+\begin{minted}{cpp}
 class Ray
 {
 public:
-    Ray() = default;
-    Ray(const glm::vec3 &origin, const glm::vec3 &direction) : orig(origin), dir(direction) {}
+    Ray(vec3 &origin, vec3 &direction) {}
 
-    const glm::vec3 &origin() const { return orig; }
-    const glm::vec3 &direction() const { return dir; }
-
-    glm::vec3 at(float t) const
+    vec3 at(float t) const
     {
         return orig + (dir * t);
     }
@@ -115,13 +117,8 @@ class Interval
 public:
     double min;
     double max;
-
-    Interval() : min(+INFINITY), max(-INFINITY) {}
-    Interval(double min, double max) : min(min), max(max) {}
-
-    // ... (other methods as in your provided code)
 };
-\end{lstlisting}
+\end{minted}
 
 The Ray class encapsulates the origin and direction of the ray, while the Interval class can be used to represent the valid range of the parameter \(t\). The at method in the Ray class implements the parametric equation, allowing us to compute points along the ray.
 
@@ -225,8 +222,6 @@ The following image illustrates a ray-sphere intersection:
 
 In Figure \ref{fig:raysphereintersection}, we can see a red circle representing a sphere on a white background. Notice the jagged pixelated border. This is because at one ray per pixel, a pixel can only be fully red (intersecting the sphere) or fully white (missing the sphere). We will fix this issue later.
 
-Certainly! I'll incorporate the explanation you've provided for planes and add the image as requested. Here's the revised section:
-
 \subsubsection{Planes}
 
 A plane is defined by a point \(\mathbf{P}_0\) on the plane and a normal vector \(\mathbf{N}\). To find the intersection of a ray with a plane, we use the plane equation:
@@ -256,8 +251,6 @@ The following image illustrates a ray-plane intersection:
 \end{figure}
 
 In Figure \ref{fig:rayplaneintersection}, we can see a ray intersecting a plane (represented as a quad for visualization purposes). The image demonstrates how a ray intersects the plane at a single point. This visual representation helps to understand the mathematical concept described above, where we solve for a single value of \(t\) to find the intersection point.
-
-Certainly! I'll expand on the extension to object meshes, focusing on triangle intersection algorithms. Here's a detailed section on this topic:
 
 \subsubsection{Extension to Object Meshes}
 
@@ -315,7 +308,7 @@ Transformation matrices allow for the linear transformation of vectors. Given a 
 \]
 Combining multiple transformations is achieved by matrix multiplication.
 
-*Translation:* A translation matrix \(\mathbf{T}\) moves an object by a vector \(\mathbf{d} = (d_x, d_y, d_z)\):
+A translation matrix \(\mathbf{T}\) moves an object by a vector \(\mathbf{d} = (d_x, d_y, d_z)\):
 \[
     \mathbf{T} = \begin{pmatrix}
         1 & 0 & 0 & d_x \\
@@ -325,7 +318,7 @@ Combining multiple transformations is achieved by matrix multiplication.
     \end{pmatrix}
 \]
 
-*Rotation:* A rotation matrix \(\mathbf{R}\) rotates an object around an axis. For example, a rotation around the \(z\)-axis by an angle \(\theta\) is given by:
+A rotation matrix \(\mathbf{R}\) rotates an object around an axis. For example, a rotation around the \(z\)-axis by an angle \(\theta\) is given by:
 \[
     \mathbf{R}_z(\theta) = \begin{pmatrix}
         \cos \theta & -\sin \theta & 0 & 0 \\
@@ -335,7 +328,7 @@ Combining multiple transformations is achieved by matrix multiplication.
     \end{pmatrix}
 \]
 
-*Scaling:* A scaling matrix \(\mathbf{S}\) scales an object by factors \(s_x\), \(s_y\), and \(s_z\):
+A scaling matrix \(\mathbf{S}\) scales an object by factors \(s_x\), \(s_y\), and \(s_z\):
 \[
     \mathbf{S} = \begin{pmatrix}
         s_x & 0   & 0   & 0 \\
@@ -344,15 +337,6 @@ Combining multiple transformations is achieved by matrix multiplication.
         0   & 0   & 0   & 1
     \end{pmatrix}
 \]
-
-
-\subsubsection{Technical Implementation}
-*Transforming Objects and Rays:* Applying matrix operations to objects and rays in the scene ensures consistent transformations. The composite matrix \(\mathbf{M}\) for a series of transformations is:
-\[
-    \mathbf{M} = \mathbf{T} \mathbf{R} \mathbf{S}
-\]
-
-*Applying Transformations to the Scene:* All elements in the scene, including geometry and light sources, are transformed using composite matrices to maintain spatial coherence.
 
 \subsection{Color and Shading Models}
 \subsubsection{Light and Material Interaction}
@@ -376,10 +360,11 @@ The intensity of the reflected light depends on the angle between the reflection
 \]
 where \(n\) is the shininess coefficient, determining the sharpness of the reflection.
 
-\subsubsection{Technical Implementation}
-Color models in code often represent colors as vectors with three components: red, green, and blue (RGB). Each component ranges from 0 to 1.
+THIS PART IS THE PUTTING YOUR EYE CLOSE TO THE SURFACE MEANS IT WASHES OUT WITH LIGHT
 
-*Lambertian Reflectance:* In a Lambertian model, the scattering of rays is uniformly distributed over the hemisphere centered on the surface normal. This can be implemented using Monte Carlo techniques to randomly sample directions within the hemisphere.
+\subsubsection{Technical Implementation}
+GAMMA STUFF HERE Color models in code often represent colors as vectors with three components: red, green, and blue (RGB). Each component ranges from 0 to 1.
+In a Lambertian model, the scattering of rays is uniformly distributed over the hemisphere centered on the surface normal. This can be implemented using Monte Carlo techniques to randomly sample directions within the hemisphere.
 
 \begin{figure}[H]
     \centering
@@ -400,7 +385,9 @@ Color models in code often represent colors as vectors with three components: re
     \label{fig:rendering_comparison}
 \end{figure}
 
-*Specular Reflectance:* For specular materials, the direction of the reflected ray is computed using the reflection equation. This is crucial for simulating shiny surfaces such as metals and mirrors.
+For specular materials, the direction of the reflected ray is computed using the reflection equation. This is crucial for simulating shiny surfaces such as metals and mirrors.
+
+METAL SPHERE HERE
 
 \section{Camera Dynamics}
 \label{sec:camera}
@@ -409,7 +396,7 @@ Color models in code often represent colors as vectors with three components: re
 \label{subsec:camera-viewing}
 
 \subsubsection{Camera Model and Rays}
-The camera in ray tracing simulates the viewpoint from which the scene is rendered. It projects rays from its origin through each pixel on the image plane, capturing the scene from a specific perspective. The mathematical foundation underlying the camera's functionality involves various concepts from linear algebra.
+The camera in ray tracing simulates the viewpoint from which the scene is rendered. It projects rays from its origin through each pixel on the image plane, capturing the scene from a specific perspective.
 
 \paragraph{Basis Vectors and Camera Orientation}
 
@@ -451,7 +438,7 @@ To generate rays from the camera through each pixel, we calculate the position o
 \paragraph{Initialization and Basis Vector Calculation}
 The `initialize` method sets up the camera's coordinate system using the basis vectors:
 
-\begin{verbatim}
+\begin{minted}{cpp}
 void Camera::initialize() {
     float theta = glm::radians(vert_fov);
     float h = tan(theta / 2);
@@ -466,7 +453,7 @@ void Camera::initialize() {
     pixel_delta_u = u * viewport_width / float(image_width);
     pixel_delta_v = v * viewport_height / float(image_height);
 }
-\end{verbatim}
+\end{minted}
 
 Here,
 \begin{itemize}
@@ -478,7 +465,7 @@ Here,
 \paragraph{Ray Generation}
 The method `getRandomRay` generates rays from the camera through each pixel, considering anti-aliasing by randomly offsetting the ray within the pixel:
 
-\begin{verbatim}
+\begin{minted}{cpp}
 Ray Camera::getRandomRay(int x, int y) const {
     float u_offset = (x + random_float()) * recip_sqrt_sppf;
     float v_offset = (y + random_float()) * recip_sqrt_sppf;
@@ -486,7 +473,7 @@ Ray Camera::getRandomRay(int x, int y) const {
     glm::vec3 ray_direction = glm::normalize(pixel00_loc + u_offset * pixel_delta_u + v_offset * pixel_delta_v - center);
     return Ray(ray_origin, ray_direction);
 }
-\end{verbatim}
+\end{minted}
 
 This method uses the basis vectors to compute the direction of the rays passing through each pixel, incorporating random offsets to achieve anti-aliasing. This process ensures that each pixel's color is the result of multiple samples, reducing aliasing and producing a smoother image.
 
@@ -515,7 +502,7 @@ Using random sampling to approximate integrals in light transport.
 
 \subsubsection{Importance Sampling}
 Advanced sampling techniques enhance efficiency and image quality.
-
+reference 3.3
 \subsection{Integration for Lighting Models}
 \subsubsection{Radiance and Light Transport Equations}
 Mathematical models for light behavior in rendering.
@@ -529,25 +516,51 @@ Implementing global illumination and integrating direct and indirect lighting.
 \section{Technical Description of the System}
 \label{sec:system-description}
 
-\subsection{System Architecture}
-\subsubsection{Overview of Core Components and Their Interactions}
-Core components such as Scene Manager, Camera Module, and Renderer interact seamlessly to simulate realistic lighting.
+NOT TRUE come up with a MORE ACCURATE DESCRIPTION
+In this section, we will focus on how the discussed ele
 
-\subsubsection{Main Control Loop's Role in Managing Rendering Operations}
-The main control loop orchestrates rendering, coordinating ray generation, shading, and image synthesis.
+\subsection{System Architecture}
 
 \subsubsection{Design Principles Behind the Modular Architecture}
-Modular design facilitates maintenance, scalability, and integration of new features.
+
+I have found that when architechting a complex system it is essential to keep several non-functional attributes in mind and to always assess your architectural decisions against these.
+A path tracer requires several key non-functional attributes to be effective and maintainable (ordered by descending importance):
+
+\begin{enumerate}
+    \item Performance: The system must be able to handle complex scenes and produce high-quality renders in a reasonable time frame.
+    \item Extensibility: As rendering techniques evolve, the system should be able to incorporate new algorithms and features easily.
+    \item Maintainability: The codebase should be easy to understand, debug, and modify.
+\end{enumerate}
+
+With these requirements in mind it naturally leads to a modular monolith approach. I find that Modular design is suited to our non-functional attributes as:
+
+\begin{itemize}
+    \item Encapsulation of Functionality: Each module encapsulates a specific set of related functions, allowing for optimized performance within modules and clear interfaces between them.
+    \item Loose Coupling: Modules interact through well-defined interfaces, making it easier to modify or replace individual components without affecting the entire system (imagine you want to switch to the Vulkan API, this should be quite an easy task!).
+    \item Parallel Development: Different teams or developers can work on separate modules simultaneously, speeding up development and integration of new features.
+    \item Testability: Individual modules can be tested in isolation, facilitating more thorough and efficient testing processes.
+\end{itemize}
+
+The modular monolith approach strikes a balance between the simplicity of a monolithic architecture and the flexibility of a fully distributed system. This approach is particularly well-suited for a path tracer, where tight integration between components is necessary for performance, but clear separation of concerns is crucial for ongoing development and maintenance.
+
+\subsubsection{Overview of Core Components and Their Interactions}
+
+The following C4 diagram provides an overview of the path tracer's modules, along with their responsibilities and interactions:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/lumi_pml.png}
+    \caption{C4 diagram of the path tracer system architecture}
+    \label{fig:c4-diagram}
+\end{figure}
+
+The Rendering Engine acts as the central hub, coordinating the activities of other modules. It delegates specific tasks to specialized modules (e.g., ray generation to the Camera Module, object intersection tests to the Geometry Module) and applies materials and shaders as needed.
+
+\subsubsection{Main Control Loop's Role in Managing Rendering Operations}
+Here talk about call stack, main loop is the top level which sets up stuff, and summons the renderer to start.
+The main control loop orchestrates rendering, coordinating ray generation, shading, and image synthesis.
 
 \subsection{Core Components}
-\subsubsection{Scene Manager: Object Storage and Scene Graph Management}
-The Scene Manager organizes objects in a scene graph, optimizing rendering operations.
-
-\subsubsection{Camera Module: Virtual Camera Settings and Primary Ray Generation}
-Simulates camera properties and generates primary rays for rendering.
-
-\subsubsection{Renderer: Ray Generation and Intersection Handling}
-Handles ray generation and calculates light interactions with surfaces.
 
 \subsubsection{Geometry: An Abstraction for Hittable Objects}
 Provides a unified interface for diverse geometrical shapes.
@@ -555,9 +568,73 @@ Provides a unified interface for diverse geometrical shapes.
 \subsubsection{Bounding Structures: Use of BVH for Efficient Intersection Tests}
 Employs BVH for accelerated intersection tests, enhancing performance.
 
+\subsubsection{Scene Manager: Object Storage and Scene Graph Management}
+The Scene Manager organizes objects in a scene graph, optimizing rendering operations.
+
+\subsubsection{Renderer: Ray Generation and Intersection Handling}
+Handles ray generation and calculates light interactions with surfaces.
+
+\subsubsection{Camera Module: Virtual Camera Settings and Primary Ray Generation}
+Simulates camera properties and generates primary rays for rendering.
+
 \subsection{Utilising OpenGL for Visualising Convergence}
-\subsubsection{Texture Mapping: Mapping the Progressively Converging Image}
-Textures are mapped to 3D models using OpenGL shaders, enhancing visual detail.
+
+In traditional path tracing implementations, the final image is typically output once the required number of samples per pixel has been reached. However, this approach doesn't provide insight into the convergence process. To address this limitation, we've implemented a progressive rendering system using OpenGL, allowing for real-time visualization of the path tracing process.
+
+\subsubsection{Progressive Rendering}
+
+The core of this visualization technique is the accumulation buffer. Instead of directly outputting the final pixel colors, we continuously update an accumulation buffer:
+
+\begin{minted}{cpp}
+vector<vec3> accumulationBuffer(IMAGE_SIZE, 0);
+vector<int> sampleCount(IMAGE_SIZE, 0);
+\end{minted}
+
+The \texttt{accumulationBuffer} stores the sum of all samples for each pixel, while \texttt{sampleCount} keeps track of the number of samples per pixel.
+
+The rendering process is modified to update the accumulation buffer after each sample:
+
+\begin{minted}{cpp}
+accumulationBuffer[index] += rayColor(r, world, maxDepth);
+sampleCount[index] += 1;
+\end{minted}
+
+This incremental approach enables us to visualize the gradual convergence of the image over time.
+To display the progressively rendered image, we utilize OpenGL's texture mapping capabilities. The current state of the render is mapped to a texture that covers the entire window:
+
+\begin{minted}{cpp}
+void updateTexture(unsigned int texture, const vector<vec3> &image,
+const int &WIDTH, const int &HEIGHT)
+    {
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexSubImage2D(WIDTH, HEIGHT, image.data());
+    }
+\end{minted}
+
+MENTION MAPPING TO A UNIFORM 2D IN FRAGMENT SHADER AND OPENGL PIPELINE HERE
+This texture is then rendered onto a quad that fills the entire screen, allowing for real-time updates of the rendering progress.
+
+\subsubsection{Benefits of Real-time Visualization}
+
+This approach offers several advantages:
+
+\begin{enumerate}
+    \item Parameter Tuning: Real-time visualization allows for quick iterations when adjusting rendering parameters, as the effects of changes are immediately visible.
+    \item Debugging Aid: It becomes easier to identify and debug issues in the path tracing algorithm as they manifest visually during rendering.
+    \item Progress Monitoring: Users can make informed decisions about when to terminate the rendering based on the current image quality.
+\end{enumerate}
+
+\subsubsection{Architecture Considerations}
+
+The integration of OpenGL for visualization required careful consideration of the system architecture:
+
+\begin{enumerate}
+    \item Separation of Concerns: The core path tracing logic remains separate from the visualization code, maintaining modularity.
+    \item Efficient Data Transfer: The accumulation buffer serves as an intermediate representation, minimizing data transfer between the CPU and GPU. MENTION HOW SLOW IT IS/ CPU PATH TRACING VS
+    \item Flexible Rendering Pipeline: The system is designed to allow easy switching between progressive rendering and traditional batch rendering if needed. CODE HERE?
+\end{enumerate}
+
+By leveraging OpenGL for real-time visualization, we've enhanced the path tracer's utility as both a rendering tool and a development aid, providing deeper insights into the rendering process and facilitating more efficient algorithm refinement.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -574,7 +651,6 @@ Statistical methods are crucial for high-quality rendering solutions.
 \label{sec:references}
 \bibliographystyle{plain}
 \bibliography{references}
-
 
 \appendix
 \section{Detailed Mathematical Derivations}
