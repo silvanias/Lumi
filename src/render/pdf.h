@@ -67,3 +67,29 @@ private:
     const Hittable &objects;
     glm::vec3 origin;
 };
+
+class MixturePDF : public PDF
+{
+public:
+    MixturePDF(std::shared_ptr<PDF> p0, std::shared_ptr<PDF> p1)
+    {
+        p[0] = p0;
+        p[1] = p1;
+    }
+
+    double value(const glm::vec3 &direction) const override
+    {
+        return 0.5 * p[0]->value(direction) + 0.5 * p[1]->value(direction);
+    }
+
+    glm::vec3 generate() const override
+    {
+        if (Utils::Random::randomDouble() < 0.5)
+            return p[0]->generate();
+        else
+            return p[1]->generate();
+    }
+
+private:
+    std::array<std::shared_ptr<PDF>, 2> p;
+};

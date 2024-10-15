@@ -90,9 +90,12 @@ glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, const Hittab
     if (!rec.mat->scatter(r, rec, attenuation, scattered, pdfValue))
         return colorFromEmission;
 
-    HittablePDF lightPDF(lights, rec.point);
-    scattered = Ray(rec.point, lightPDF.generate());
-    pdfValue = lightPDF.value(scattered.direction());
+    auto p0 = std::make_shared<HittablePDF>(lights, rec.point);
+    auto p1 = std::make_shared<CosinePDF>(rec.normal);
+    MixturePDF mixed_pdf(p0, p1);
+
+    scattered = Ray(rec.point, mixed_pdf.generate());
+    pdfValue = mixed_pdf.value(scattered.direction());
 
     float scattering_pdf = rec.mat->scatteringPDF(r, rec, scattered);
 
