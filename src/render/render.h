@@ -50,20 +50,21 @@ public:
         double totalRenderTime = 0.0;
         int numRuns = 0;
 
+        // TODO: REALLY NEEDS A REFACTOR, SHOULD BE ENCAPSULATED IN WORLD
+        auto empty_material = std::shared_ptr<Material>();
+        Quad lights(glm::vec3(343, 554, 332), glm::vec3(-130, 0, 0), glm::vec3(0, 0, -105), empty_material);
+
         while (!glfwWindowShouldClose(window))
         {
             auto start = std::chrono::high_resolution_clock::now();
 
-            camera.render(world, accumulationBuffer, sampleCount);
+            camera.render(world, lights, accumulationBuffer, sampleCount);
 
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed = end - start;
-
             totalRenderTime += elapsed.count();
             ++numRuns;
-
             double averageRenderTime = totalRenderTime / numRuns;
-
             std::cout << "Current render time: " << elapsed.count() << " seconds, "
                       << "Average render time: " << averageRenderTime << " seconds, "
                       << "Number of runs: " << numRuns << std::endl;
@@ -81,7 +82,7 @@ public:
             glBindTexture(GL_TEXTURE_2D, texture);
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            renderUI();
+            // renderUI();
             glfwSwapBuffers(window);
             glfwPollEvents();
         }

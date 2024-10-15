@@ -1,7 +1,13 @@
 #include "material.h"
 #include "geometry/hittable/hittable.h"
 
-glm::vec3 Material::emitted() const
+// double Material::scatteringPDF(
+//     const Ray &r_in, const HitRecord &rec, const Ray &scattered) const
+// {
+//     return 0;
+// };
+
+glm::vec3 Material::emitted(const HitRecord &rec) const
 {
     return glm::vec3(0, 0, 0);
 }
@@ -43,8 +49,10 @@ bool Metal::scatter(
 
 DiffuseLight::DiffuseLight(const glm::vec3 &emit) : emit(emit) {}
 
-glm::vec3 DiffuseLight::emitted() const
+glm::vec3 DiffuseLight::emitted(const HitRecord &rec) const
 {
+    if (!rec.frontFace)
+        return glm::vec3(0);
     return emit;
 }
 

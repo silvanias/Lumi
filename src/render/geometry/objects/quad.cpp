@@ -10,6 +10,8 @@ Quad::Quad(const glm::vec3 &Q, const glm::vec3 &u, const glm::vec3 &v, std::shar
     D = dot(normal, Q);
     basis_scaling_factor = n / glm::dot(n, n);
 
+    area = glm::length(n);
+
     setBoundingBox();
 }
 
@@ -50,6 +52,24 @@ bool Quad::inQuad(double alpha, double beta) const
 {
     auto unit_interval = Interval(0, 1);
     return unit_interval.contains(alpha) && unit_interval.contains(beta);
+}
+
+double Quad::pdfValue(const glm::vec3 &origin, const glm::vec3 &direction) const
+{
+    HitRecord rec;
+    if (!this->hit(Ray(origin, direction), Interval(0.001, INFINITY), rec))
+        return 0;
+
+    auto distance_squared = rec.t * rec.t * glm::length2(direction);
+    auto cosine = std::fabs(dot(direction, rec.normal) / glm::length(direction));
+
+    return distance_squared / (cosine * area);
+}
+
+glm::vec3 Quad::random(const glm::vec3 &origin) const
+{
+    auto p = Q + (float(Utils::Random::randomDouble()) * u) + (float(Utils::Random::randomDouble()) * v);
+    return p - origin;
 }
 
 std::shared_ptr<HittableList> Box(const glm::vec3 &a, const glm::vec3 &b, std::shared_ptr<Material> mat)

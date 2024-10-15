@@ -1,4 +1,6 @@
 #include "camera.h"
+#include "pdf.h"
+#include <iostream>
 
 Camera::Camera(unsigned int imageWidth, unsigned int imageHeight, const glm::vec3 &pos, const glm::vec3 &focalPoint, const glm::vec3 &up, float vertFov, unsigned int samplesPerPixel, unsigned int maxDepth)
     : imageWidth(imageWidth), imageHeight(imageHeight), center(pos), lookAt(focalPoint),
@@ -70,7 +72,7 @@ Ray Camera::getRandomStratifiedRay(glm::vec3 pixelCenter, int gridX, int gridY) 
     return r;
 }
 
-glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, int depth) const
+glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, const Hittable &lights, int depth) const
 {
     if (depth <= 0)
         return glm::vec3(0.0f);
@@ -83,34 +85,23 @@ glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, int depth) c
     Ray scattered;
     glm::vec3 attenuation;
     float pdfValue;
-    glm::vec3 colorFromEmission = rec.mat->emitted();
+    glm::vec3 colorFromEmission = rec.mat->emitted(rec);
 
     if (!rec.mat->scatter(r, rec, attenuation, scattered, pdfValue))
         return colorFromEmission;
 
-    auto on_light = glm::vec3(Utils::Random::randomDouble(213, 343), 554, Utils::Random::randomDouble(227, 332));
-    auto to_light = on_light - rec.point;
-    auto distance_squared = glm::length2(to_light);
-    to_light = glm::normalize(to_light);
-
-    if (dot(to_light, rec.normal) < 0)
-        return colorFromEmission;
-
-    double light_area = (343 - 213) * (332 - 227);
-    auto light_cosine = std::fabs(to_light.y);
-    if (light_cosine < 0.000001)
-        return colorFromEmission;
-
-    pdfValue = distance_squared / (light_cosine * light_area);
-    scattered = Ray(rec.point, to_light);
+    HittablePDF lightPDF(lights, rec.point);
+    scattered = Ray(rec.point, lightPDF.generate());
+    pdfValue = lightPDF.value(scattered.direction());
 
     float scattering_pdf = rec.mat->scatteringPDF(r, rec, scattered);
-    glm::vec3 colorFromScatter = (attenuation * scattering_pdf * rayColor(scattered, world, depth - 1)) / pdfValue;
+
+    glm::vec3 colorFromScatter = (attenuation * scattering_pdf * rayColor(scattered, world, lights, depth - 1)) / pdfValue;
     return colorFromScatter + colorFromEmission;
 }
 
 // Render the world into the accumulation buffer
-void Camera::render(const HittableList &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount)
+void Camera::render(const HittableList &world, const Hittable &lights, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount)
 {
     for (int y = 0; y < imageHeight; ++y)
     {
@@ -124,7 +115,7 @@ void Camera::render(const HittableList &world, std::vector<glm::vec3> &accumulat
                 for (int gridX = 0; gridX < sqrtSamplePerPixelPerFrame; gridX++)
                 {
                     Ray r = getRandomStratifiedRay(pixelCenter, gridX, gridY);
-                    accumulationBuffer[index] += rayColor(r, world, maxDepth);
+                    accumulationBuffer[index] += rayColor(r, world, lights, maxDepth);
                     sampleCount[index] += 1;
                 }
             }

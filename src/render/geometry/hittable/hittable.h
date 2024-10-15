@@ -34,6 +34,16 @@ public:
 
     // Returns the axis-aligned bounding box of the object.
     virtual AABB boundingBox() const = 0;
+
+    virtual double pdfValue(const glm::vec3 &origin, const glm::vec3 &direction) const
+    {
+        return 0.0;
+    }
+
+    virtual glm::vec3 random(const glm::vec3 &origin) const
+    {
+        return glm::vec3(1, 0, 0);
+    }
 };
 
 // Class for applying a translation to a hittable object.

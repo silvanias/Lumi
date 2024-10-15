@@ -17,11 +17,14 @@ public:
     AABB boundingBox() const override;
     bool hit(const Ray &r, Interval ray_t, HitRecord &rec) const override;
     bool inQuad(double alpha, double beta) const;
+    double pdfValue(const glm::vec3 &origin, const glm::vec3 &direction) const override;
+    glm::vec3 random(const glm::vec3 &origin) const override;
 
 private:
     glm::vec3 Q; // A corner
     glm::vec3 u; // Vectors to the other corners
     glm::vec3 v;
+    double area;
 
     glm::vec3 basis_scaling_factor;
     glm::vec3 normal;

@@ -19,14 +19,14 @@ public:
         return false;
     };
 
-    double scatteringPDF(
+    virtual double scatteringPDF(
         const Ray &r_in, const HitRecord &rec, const Ray &scattered) const
     {
-        return 1.0f;
+        return 0;
     };
 
     // Returns emitted color from the material (default is no emission).
-    virtual glm::vec3 emitted() const;
+    virtual glm::vec3 emitted(const HitRecord &rec) const;
 };
 
 // Lambertian material for diffuse surfaces.
@@ -39,7 +39,7 @@ public:
         const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, float &pdf) const override;
 
     double scatteringPDF(
-        const Ray &r_in, const HitRecord &rec, const Ray &scattered) const;
+        const Ray &r_in, const HitRecord &rec, const Ray &scattered) const override;
 
 private:
     glm::vec3 albedo; // Reflectance color
@@ -63,9 +63,10 @@ class DiffuseLight : public Material
 public:
     DiffuseLight(const glm::vec3 &emit);
 
-    glm::vec3 emitted() const override;
+    glm::vec3 emitted(const HitRecord &rec) const override;
+
     bool scatter(const Ray &r_in, const HitRecord &rec, glm::vec3 &attenuation, Ray &scattered, float &pdf) const override;
 
 private:
-    glm::vec3 emit; // Emission color
+    glm::vec3 emit;
 };
