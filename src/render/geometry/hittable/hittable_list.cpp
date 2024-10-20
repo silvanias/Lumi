@@ -6,6 +6,21 @@ void HittableList::add(std::shared_ptr<Hittable> object)
     bbox = AABB(bbox, object->boundingBox());
 }
 
+HittableList &HittableList::operator+=(const HittableList &other)
+{
+    for (const auto &obj : other.objects)
+    {
+        add(obj);
+    }
+    return *this;
+}
+
+HittableList operator+(HittableList lhs, const HittableList &rhs)
+{
+    lhs += rhs;
+    return lhs;
+}
+
 bool HittableList::hit(const Ray &r, Interval rayT, HitRecord &rec) const
 {
     HitRecord tempRec;

@@ -72,13 +72,12 @@ Ray Camera::getRandomStratifiedRay(glm::vec3 pixelCenter, int gridX, int gridY) 
     return r;
 }
 
-glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, const Hittable &lights, int depth) const
+glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, const HittableList &lights, int depth) const
 {
     if (depth <= 0)
         return glm::vec3(0.0f);
 
     HitRecord rec;
-
     if (!world.hit(r, Interval(0.001f, INFINITY), rec))
         return glm::vec3(0, 0, 0);
 
@@ -90,7 +89,8 @@ glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, const Hittab
     if (!rec.mat->scatter(r, rec, attenuation, scattered, pdfValue))
         return colorFromEmission;
 
-    auto p0 = std::make_shared<HittablePDF>(lights, rec.point);
+    // TODO: Objects.front is a hack for now, need to support multiple lights eventually
+    auto p0 = std::make_shared<HittablePDF>(*lights.objects.front(), rec.point);
     auto p1 = std::make_shared<CosinePDF>(rec.normal);
     MixturePDF mixed_pdf(p0, p1);
 
@@ -104,7 +104,7 @@ glm::vec3 Camera::rayColor(const Ray &r, const HittableList &world, const Hittab
 }
 
 // Render the world into the accumulation buffer
-void Camera::render(const HittableList &world, const Hittable &lights, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount)
+void Camera::render(const World &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount)
 {
     for (int y = 0; y < imageHeight; ++y)
     {
@@ -118,7 +118,7 @@ void Camera::render(const HittableList &world, const Hittable &lights, std::vect
                 for (int gridX = 0; gridX < sqrtSamplePerPixelPerFrame; gridX++)
                 {
                     Ray r = getRandomStratifiedRay(pixelCenter, gridX, gridY);
-                    accumulationBuffer[index] += rayColor(r, world, lights, maxDepth);
+                    accumulationBuffer[index] += rayColor(r, world.objects, world.lights, maxDepth);
                     sampleCount[index] += 1;
                 }
             }

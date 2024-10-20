@@ -37,7 +37,7 @@ public:
                     const Shader &shader,
                     const unsigned int &VAO,
                     const unsigned int &texture,
-                    const HittableList &world,
+                    const World &world,
                     Camera &camera,
                     const unsigned int &IMAGE_SIZE)
     {
@@ -50,15 +50,11 @@ public:
         double totalRenderTime = 0.0;
         int numRuns = 0;
 
-        // TODO: REALLY NEEDS A REFACTOR, SHOULD BE ENCAPSULATED IN WORLD
-        auto empty_material = std::shared_ptr<Material>();
-        Quad lights(glm::vec3(343, 554, 332), glm::vec3(-130, 0, 0), glm::vec3(0, 0, -105), empty_material);
-
         while (!glfwWindowShouldClose(window))
         {
             auto start = std::chrono::high_resolution_clock::now();
 
-            camera.render(world, lights, accumulationBuffer, sampleCount);
+            camera.render(world, accumulationBuffer, sampleCount);
 
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed = end - start;

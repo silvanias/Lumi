@@ -6,25 +6,7 @@ const CamPos CAM_POS_SPHERES{
     glm::vec3(0.0f, 1.0f, 0.0f),
     1.2f};
 
-const CamPos CAM_POS_LIT{
-    glm::vec3(26, 3, 6),
-    glm::vec3(0, 2, 0),
-    glm::vec3(0.0f, 1.0f, 0.0f),
-    0.35f};
-
-const CamPos CAM_POS_QUAD{
-    glm::vec3(0.0f, 0.0f, 9.0f),
-    glm::vec3(0.0f, 0.0f, 0.0f),
-    glm::vec3(0.0f, 1.0f, 0.0f),
-    1.4f};
-
-const CamPos CAM_POS_CORNELL_BOX{
-    glm::vec3(278, 278, -800),
-    glm::vec3(278, 278, 0),
-    glm::vec3(0, 1, 0),
-    0.7f};
-
-HittableList sphereWorld()
+HittableList sphereWorldObjs()
 {
     HittableList world;
 
@@ -41,7 +23,7 @@ HittableList sphereWorld()
     return world;
 }
 
-HittableList complexSphereWorld()
+HittableList complexSphereWorldObjs()
 {
     HittableList world;
 
@@ -88,24 +70,13 @@ HittableList complexSphereWorld()
     return world;
 }
 
-HittableList litWorld()
-{
-    HittableList world;
+const CamPos CAM_POS_QUAD{
+    glm::vec3(0.0f, 0.0f, 9.0f),
+    glm::vec3(0.0f, 0.0f, 0.0f),
+    glm::vec3(0.0f, 1.0f, 0.0f),
+    1.4f};
 
-    auto material = std::make_shared<Lambertian>(glm::vec3(0.4, 0.2, 0.1));
-    auto metal = std::make_shared<Metal>(glm::vec3(0.7, 0.7, 0.7));
-    auto difflight = std::make_shared<DiffuseLight>(glm::vec3(4, 4, 4));
-    auto bluelight = std::make_shared<DiffuseLight>(glm::vec3(0.5f, 0.5f, 6));
-
-    world.add(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000, material));
-    world.add(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2, metal));
-    world.add(std::make_shared<Quad>(glm::vec3(3, 1, -2), glm::vec3(2, 0, 0), glm::vec3(0, 2, 0), bluelight));
-    world.add(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2, difflight));
-
-    return world;
-}
-
-HittableList quadWorld()
+HittableList quadWorldObjs()
 {
     HittableList world;
 
@@ -126,14 +97,55 @@ HittableList quadWorld()
     return world;
 }
 
-HittableList cornellBox()
+//////////////////////////
+
+const CamPos CAM_POS_LIT{
+    glm::vec3(26, 3, 6),
+    glm::vec3(0, 2, 0),
+    glm::vec3(0.0f, 1.0f, 0.0f),
+    0.35f};
+
+HittableList litWorldObjs()
+{
+    HittableList world;
+
+    auto material = std::make_shared<Lambertian>(glm::vec3(0.4, 0.2, 0.1));
+    auto metal = std::make_shared<Metal>(glm::vec3(0.7, 0.7, 0.7));
+
+    world.add(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000, material));
+    world.add(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2, metal));
+
+    return world;
+}
+
+HittableList litWorldLights()
+{
+    HittableList lights;
+    auto difflight = std::make_shared<DiffuseLight>(glm::vec3(4, 4, 4));
+    auto bluelight = std::make_shared<DiffuseLight>(glm::vec3(0.5f, 0.5f, 6));
+    lights.add(std::make_shared<Quad>(glm::vec3(3, 1, -2), glm::vec3(2, 0, 0), glm::vec3(0, 2, 0), bluelight));
+    lights.add(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2, difflight));
+
+    return lights;
+}
+
+const World litWorld = World(CAM_POS_LIT, litWorldObjs(), litWorldLights());
+
+//////////////////////////
+
+const CamPos CAM_POS_CORNELL_BOX{
+    glm::vec3(278, 278, -800),
+    glm::vec3(278, 278, 0),
+    glm::vec3(0, 1, 0),
+    0.7f};
+
+HittableList cornellBoxObjs()
 {
     HittableList world;
 
     auto red = std::make_shared<Lambertian>(glm::vec3(0.65f, 0.05f, 0.05f));
     auto white = std::make_shared<Lambertian>(glm::vec3(.73, .73, .73));
     auto green = std::make_shared<Lambertian>(glm::vec3(.12, .45, .15));
-    auto light = std::make_shared<DiffuseLight>(glm::vec3(15, 15, 15));
 
     // Room
     world.add(std::make_shared<Quad>(glm::vec3(555, 0, 0), glm::vec3(0, 555, 0), glm::vec3(0, 0, 555), green));
@@ -141,8 +153,6 @@ HittableList cornellBox()
     world.add(std::make_shared<Quad>(glm::vec3(0, 0, 0), glm::vec3(555, 0, 0), glm::vec3(0, 0, 555), white));
     world.add(std::make_shared<Quad>(glm::vec3(555, 555, 555), glm::vec3(-555, 0, 0), glm::vec3(0, 0, -555), white));
     world.add(std::make_shared<Quad>(glm::vec3(0, 0, 555), glm::vec3(555, 0, 0), glm::vec3(0, 555, 0), white));
-
-    world.add(std::make_shared<Quad>(glm::vec3(343, 554, 332), glm::vec3(-130, 0, 0), glm::vec3(0, 0, -105), light));
 
     // Boxes
     std::shared_ptr<Hittable> box1 = Box(glm::vec3(0, 0, 0), glm::vec3(165, 330, 165), white);
@@ -157,3 +167,16 @@ HittableList cornellBox()
 
     return world;
 }
+
+HittableList cornellBoxLights()
+{
+    HittableList lights;
+
+    auto light = std::make_shared<DiffuseLight>(glm::vec3(15, 15, 15));
+    auto empty_material = std::shared_ptr<Material>();
+    lights.add(std::make_shared<Quad>(glm::vec3(343, 554, 332), glm::vec3(-130, 0, 0), glm::vec3(0, 0, -105), light));
+    return lights;
+}
+
+// Check why need to do this
+const World cornellBox = World(CAM_POS_CORNELL_BOX, cornellBoxObjs() += cornellBoxLights(), cornellBoxLights());

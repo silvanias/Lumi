@@ -15,7 +15,7 @@ public:
     Camera(unsigned int imageWidth, unsigned int imageHeight, const CamPos &camPos, unsigned int samplesPerPixel, unsigned int maxDepth);
 
     // Renders the world into the accumulation buffer.
-    void render(const HittableList &world, const Hittable &lights, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount);
+    void render(const World &world, std::vector<glm::vec3> &accumulationBuffer, std::vector<int> &sampleCount);
 
     int imageWidth;
     int imageHeight;
@@ -31,7 +31,7 @@ private:
     Ray getRandomStratifiedRay(glm::vec3 pixelCenter, int gridX, int gridY) const;
 
     // Computes the color of a ray intersecting with the world.
-    glm::vec3 rayColor(const Ray &r, const HittableList &world, const Hittable &lights, int depth) const;
+    glm::vec3 rayColor(const Ray &r, const HittableList &world, const HittableList &lights, int depth) const;
 
     glm::vec3 center;               // Camera center
     glm::vec3 lookAt;               // Point camera is looking at
