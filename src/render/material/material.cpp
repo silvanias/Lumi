@@ -1,12 +1,6 @@
 #include "material.h"
 #include "geometry/hittable/hittable.h"
 
-// double Material::scatteringPDF(
-//     const Ray &r_in, const HitRecord &rec, const Ray &scattered) const
-// {
-//     return 0;
-// };
-
 glm::vec3 Material::emitted(const HitRecord &rec) const
 {
     return glm::vec3(0, 0, 0);
@@ -21,10 +15,6 @@ bool Lambertian::scatter(
     auto scatter_direction = uvw.transform(Utils::Random::randomCosineDirection());
     scattered = Ray(rec.point, glm::normalize(scatter_direction));
     pdf = glm::dot(uvw.w(), scattered.direction()) / std::numbers::pi;
-    // auto scatter_direction = rec.normal + Utils::Sampling::sampleUnitSphere();
-    // scattered = Ray(rec.point, scatter_direction);
-    // TODO: is it necessary to check if scatter_direction near zero?
-
     attenuation = albedo;
     return true;
 }
