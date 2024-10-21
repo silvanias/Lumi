@@ -215,7 +215,7 @@ The following image illustrates a ray-sphere intersection:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/ray_sphere_intersection.png}
+    \includegraphics[width=0.5\textwidth]{images/intersections/ray_sphere_intersection.png}
     \caption{Ray-sphere intersection demonstration}
     \label{fig:raysphereintersection}
 \end{figure}
@@ -245,7 +245,7 @@ The following image illustrates a ray-plane intersection:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/ray_quad_intersection.png}
+    \includegraphics[width=0.5\textwidth]{images/intersections/ray_quad_intersection.png}
     \caption{Ray-plane intersection demonstration}
     \label{fig:rayplaneintersection}
 \end{figure}
@@ -300,43 +300,134 @@ After testing all triangles, return the closest intersection point (smallest pos
 
 \subsection{Placing Objects into the World}
 \subsubsection{Translation, Rotation, and Scaling}
-Objects in a 3D scene can be manipulated using transformations such as translation, rotation, and scaling. These transformations are represented by matrices.
 
-Transformation matrices allow for the linear transformation of vectors. Given a vector \(\mathbf{v}\) and a transformation matrix \(\mathbf{M}\), the transformed vector \(\mathbf{v}'\) is:
+In computer graphics, assembling a scene involves not only defining the objects within it but also positioning them appropriately. Consider the classic demonstration scene known as the \textit{Cornell Box}~\cite{cornellbox}, which is a standard test for rendering algorithms to showcase accurate light transport and shading.
+From the previous sections, we've discussed how to test intersections with various geometric primitives. However, to build a complex scene like the Cornell Box, we need a systematic way to place and manipulate these objects in three-dimensional space.
+
+Matrices are fundamental tools in linear algebra that we can use to efficiently represent and compute transformations in space. We can represent operations such as:
+
+\begin{itemize}
+    \item \textbf{Translation} moves an object by a certain distance along the axes.
+    \item \textbf{Rotation} turns an object around an axis passing through the origin.
+    \item \textbf{Scaling} resizes an object by stretching or compressing it along the axes.
+\end{itemize}
+
+and put them all into mathematical objects that can be easily combined and applied to points and vectors in 3D space (and computed quickly on a GPU).
+
+In our path tracer we can view a point or vector as a column vector (a matrix of N $\times$ 1):
+\[
+    \mathbf{v} = \begin{pmatrix} x \\ y \\ z \end{pmatrix}
+\]
+Transforming this vector involves multiplying it by a transformation matrix:
 \[
     \mathbf{v}' = \mathbf{M} \mathbf{v}
 \]
-Combining multiple transformations is achieved by matrix multiplication.
+where \(\mathbf{v}'\) is the transformed vector and \(\mathbf{M}\) is the transformation matrix.
+If this transformation matrix is then applied to all points in our object, then we have successfully transformed our object.
 
-A translation matrix \(\mathbf{T}\) moves an object by a vector \(\mathbf{d} = (d_x, d_y, d_z)\):
+\subsubsection*{Translation}
+
+We will start with translation as though it may appear the most simple:
+\( \mathbf{v}' = \mathbf{v} + \mathbf{d} \)
+where \( \mathbf{d} = \begin{bmatrix} dx \\ dy \\ dz \end{bmatrix} \) is the translation vector.
+Unfortunately, this breaks the laws of linearity (see \autoref{sec:appendix-derivations-linear}).
+
+This is a problem because translation cannot be represented with a 3$\times$3 matrix in 3D space.
+
+
+To unify translation with rotation and scaling in a single matrix operation, we introduce homogeneous coordinates. By adding an extra dimension to our vectors and matrices, we can represent all affine transformations, including translation, with 4$\times$4 matrices.
+
+In homogeneous coordinates, a point becomes:
+
+\[
+    \mathbf{v}_h = \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix}
+\]
+
+A translation matrix in homogeneous coordinates is:
+
 \[
     \mathbf{T} = \begin{pmatrix}
         1 & 0 & 0 & d_x \\
         0 & 1 & 0 & d_y \\
         0 & 0 & 1 & d_z \\
-        0 & 0 & 0 & 1
+        0 & 0 & 0 & 1   \\
     \end{pmatrix}
 \]
 
-A rotation matrix \(\mathbf{R}\) rotates an object around an axis. For example, a rotation around the \(z\)-axis by an angle \(\theta\) is given by:
+The transformation is then applied via:
+
+\[
+    \begin{bmatrix}  1 & 0 & 0 & {T_x} \\ 0 & 1 & 0 & {T_y} \\ 0 & 0 & 1 & {T_z} \\ 0 & 0 & 0 & 1 \end{bmatrix} \cdot \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} = \begin{pmatrix} x + {T_x} \\ y + {T_y} \\ z + {T_z} \\ 1 \end{pmatrix}
+\]
+
+
+
+While we primarily use 3$\times$3 matrices for rotation and scaling in our renderer, working with homogeneous coordinates and 4$\times$4 matrices becomes essential for incorporating translation and perspective transformations, especially in more advanced rendering techniques.
+
+\subsubsection{Scaling Matrices}
+
+Scaling \textit{is} a linear transformation which means that it can be represented using a 3$\times$3 matrix, however as we would like all our transformations to multiply with each other we add a 4th scaling value of 1.
+
+\[
+    \begin{bmatrix}
+        {S_1} & 0     & 0     & 0 \\
+        0     & {S_2} & 0     & 0 \\
+        0     & 0     & {S_3} & 0 \\
+        0     & 0     & 0     & 1
+    \end{bmatrix} \cdot
+    \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} =
+    \begin{pmatrix} {S_x} \cdot x \\ {S_y} \cdot y \\ {S_z} \cdot z \\ 1 \end{pmatrix}
+\]
+
+where \( S_x \), \( S_y \), and \( S_z \) are the scaling factors along the \( x \), \( y \), and \( z \) axes, respectively.
+
+
+
+\subsubsection*{Rotation Matrices}
+
+Rotation can also be represented using a 3$\times$3 matrix, but again, in practice they are represented as 4$\times$4 matrices.
+Rotations in 3D are specified with an angle (in radians) and a rotation axis, with which you rotate the object around.
+
+
+\paragraph{Rotation Around the X-axis}
+
+Rotating a point around the \(x\)-axis by an angle \(\theta\):
+\[
+    \mathbf{R}_x(\theta) = \begin{pmatrix}
+        1 & 0           & 0            & 0 \\
+        0 & \cos \theta & -\sin \theta & 0 \\
+        0 & \sin \theta & \cos \theta  & 0 \\
+        0 & 0           & 0            & 1 \\
+    \end{pmatrix}
+\]
+
+
+\paragraph{Rotation Around the Y-axis}
+
+Rotating a point around the \(y\)-axis by an angle \(\theta\):
+\[
+    \mathbf{R}_y(\theta) = \begin{pmatrix}
+        \cos \theta  & 0 & \sin \theta & 0 \\
+        0            & 1 & 0           & 0 \\
+        -\sin \theta & 0 & \cos \theta & 0 \\
+        0            & 0 & 0           & 1 \\
+    \end{pmatrix}
+\]
+
+\paragraph{Rotation Around the Z-axis}
+
+Rotating a point around the \(z\)-axis by an angle \(\theta\):
 \[
     \mathbf{R}_z(\theta) = \begin{pmatrix}
         \cos \theta & -\sin \theta & 0 & 0 \\
         \sin \theta & \cos \theta  & 0 & 0 \\
         0           & 0            & 1 & 0 \\
-        0           & 0            & 0 & 1
+        0           & 0            & 0 & 1 \\
     \end{pmatrix}
 \]
 
-A scaling matrix \(\mathbf{S}\) scales an object by factors \(s_x\), \(s_y\), and \(s_z\):
-\[
-    \mathbf{S} = \begin{pmatrix}
-        s_x & 0   & 0   & 0 \\
-        0   & s_y & 0   & 0 \\
-        0   & 0   & s_z & 0 \\
-        0   & 0   & 0   & 1
-    \end{pmatrix}
-\]
+POTENTIALLY A SECTION HERE TALKING ABOUT PERFORMANCE AND TRANSFORMING VECTORS INTO MODEL SPACE
+
 
 \subsection{Color and Shading Models}
 \subsubsection{Light and Material Interaction}
@@ -370,14 +461,14 @@ In a Lambertian model, the scattering of rays is uniformly distributed over the 
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/uniform_diffuse.png}
+        \includegraphics[width=\textwidth]{images/lambertian/uniform_diffuse.png}
         \caption{Rendered image using Uniform Diffuse Renderer}
         \label{fig:completely_diffuse}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/lambertian_diffuse.png}
+        \includegraphics[width=\textwidth]{images/lambertian/lambertian_diffuse.png}
         \caption{Rendered image using Lambertian Diffuse Renderer}
         \label{fig:lambertian_diffuse}
     \end{subfigure}
@@ -516,6 +607,7 @@ Implementing global illumination and integrating direct and indirect lighting.
 \section{Technical Description of the System}
 \label{sec:system-description}
 
+Put prerequistes here, opengl cpp etc.
 NOT TRUE come up with a MORE ACCURATE DESCRIPTION
 In this section, we will focus on how the discussed ele
 
@@ -655,6 +747,32 @@ Statistical methods are crucial for high-quality rendering solutions.
 \appendix
 \section{Detailed Mathematical Derivations}
 \label{sec:appendix-derivations}
+
+\subsection{Linearity of Transformations}
+\label{sec:appendix-derivations-linear}
+To demonstrate why translation is not a linear transformation, we consider the following properties: \\
+
+Law of Additivity: \( T(\mathbf{u} + \mathbf{v}) = T(\mathbf{u}) + T(\mathbf{v}) \)
+
+Law of Homogeneity: \( T(c\mathbf{u}) = cT(\mathbf{u}) \)
+
+If we test the linearity conditions:
+
+Additivity:
+\[
+    T(\mathbf{u} + \mathbf{v}) = (\mathbf{u} + \mathbf{v}) + \mathbf{b} \neq T(\mathbf{u}) + T(\mathbf{v}) = (\mathbf{u} + \mathbf{b}) + (\mathbf{v} + \mathbf{b})
+\]
+
+The right-hand side becomes \( \mathbf{u} + \mathbf{v} + 2\mathbf{b} \), which is not equal to the left-hand side.
+
+Homogeneity:
+\[
+    T(c\mathbf{u}) = c\mathbf{u} + \mathbf{b} \neq cT(\mathbf{u}) = c(\mathbf{u} + \mathbf{b}) = c\mathbf{u} + c\mathbf{b}
+\]
+
+The translation vector \( \mathbf{b} \) remains unchanged and doesn’t scale with \( c \), breaking this property as well.
+
+Thus, the translation is an affine transformation, not a linear transformation, because it doesn’t preserve these linearity conditions.
 
 \section{Code Snippets and Pseudocode}
 \label{sec:appendix-code}
