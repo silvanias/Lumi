@@ -57,7 +57,7 @@ As we introduce each component, we demonstrate its effect on the rendered image,
 \subsection{Background}
 \subsubsection{Overview of Ray Tracing}
 Ray tracing is a rendering technique that simulates the physical behavior of light to create realistic images. At its core, ray tracing involves tracing the path of light rays as they interact with objects in a virtual scene \cite{Glassner1989}.
-The fundamental concept is to cast rays from a virtual camera through each pixel of an image plane into the scene. These rays interact with objects, potentially reflecting, refracting, or being absorbed, mimicking the behavior of light in the real world \cite{Whitted1980}. By accurately modeling these interactions, ray tracing can produce highly realistic effects such as shadows, reflections, and refractions.
+The fundamental concept is to cast rays from a virtual camera through each pixel of an image plane into the scene. These rays interact with objects, potentially reflecting, refracting, or being absorbed, mimicking the behavior of light in the real world. By accurately modeling these interactions, ray tracing can produce highly realistic effects such as shadows, reflections, and refractions.
 
 Path tracing, an advanced form of ray tracing, extends this concept by using Monte Carlo methods to solve the rendering equation \cite{Kajiya1986}. It traces numerous light paths through the scene, accounting for multiple bounces and complex light interactions. This approach allows for the accurate simulation of global illumination effects, including soft shadows, color bleeding, and caustics \cite{Veach1997}.
 
@@ -91,38 +91,6 @@ where:
 \end{itemize}
 
 This equation describes all points along the ray, starting from the origin and extending infinitely in the direction of \(\mathbf{D}\). In practice, we often constrain \(t\) to an interval \([t{\text{min}}, t{\text{max}}]\) to define a specific segment of the ray.
-
-\subsubsection{Definition in Code}
-
-In code, we can represent this mathematical concept using a Ray class and an Interval class. Here's how these classes are implemented:
-
-\begin{minted}{cpp}
-class Ray
-{
-public:
-    Ray(vec3 &origin, vec3 &direction) {}
-
-    vec3 at(float t) const
-    {
-        return orig + (dir * t);
-    }
-
-private:
-    glm::vec3 orig;
-    glm::vec3 dir;
-};
-
-class Interval
-{
-public:
-    double min;
-    double max;
-};
-\end{minted}
-
-The Ray class encapsulates the origin and direction of the ray, while the Interval class can be used to represent the valid range of the parameter \(t\). The at method in the Ray class implements the parametric equation, allowing us to compute points along the ray.
-
-This representation allows us to efficiently model light paths in our path tracing system, forming the foundation for intersection tests and light transport calculations.
 
 \subsection{Intersection Testing}
 
@@ -258,6 +226,9 @@ Intersection tests can be extended to complex object meshes using triangle inter
 
 \paragraph{Triangle Intersection}
 
+UNNECESSARY TO DEMONSTRATE, REMOVE OR IMPROVE
+
+
 The most common method for triangle intersection is the Möller–Trumbore algorithm. This algorithm is efficient and doesn't require precomputation of the triangle plane equation.
 
 Given a ray \(\mathbf{R}(t) = \mathbf{O} + t\mathbf{D}\) and a triangle defined by vertices \(\mathbf{V}0\), \(\mathbf{V}1\), and \(\mathbf{V}_2\), we can express any point on the triangle as:
@@ -325,7 +296,7 @@ Transforming this vector involves multiplying it by a transformation matrix:
 where \(\mathbf{v}'\) is the transformed vector and \(\mathbf{M}\) is the transformation matrix.
 If this transformation matrix is then applied to all points in our object, then we have successfully transformed our object.
 
-\subsubsection*{Translation}
+\subsubsection{Translation}
 
 We will start with translation as though it may appear the most simple:
 \( \mathbf{v}' = \mathbf{v} + \mathbf{d} \)
@@ -364,7 +335,7 @@ The transformation is then applied via:
 
 While we primarily use 3$\times$3 matrices for rotation and scaling in our renderer, working with homogeneous coordinates and 4$\times$4 matrices becomes essential for incorporating translation and perspective transformations, especially in more advanced rendering techniques.
 
-\subsubsection{Scaling Matrices}
+\subsubsection{Scaling}
 
 Scaling \textit{is} a linear transformation which means that it can be represented using a 3$\times$3 matrix, however as we would like all our transformations to multiply with each other we add a 4th scaling value of 1.
 
@@ -383,7 +354,7 @@ where \( S_x \), \( S_y \), and \( S_z \) are the scaling factors along the \( x
 
 
 
-\subsubsection*{Rotation Matrices}
+\subsubsection{Rotation Matrices}
 
 Rotation can also be represented using a 3$\times$3 matrix, but again, in practice they are represented as 4$\times$4 matrices.
 Rotations in 3D are specified with an angle (in radians) and a rotation axis, with which you rotate the object around.
@@ -428,20 +399,57 @@ Rotating a point around the \(z\)-axis by an angle \(\theta\):
 
 POTENTIALLY A SECTION HERE TALKING ABOUT PERFORMANCE AND TRANSFORMING VECTORS INTO MODEL SPACE
 
+With these transformations we can now easily set up the scene like so:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/no_lighting_cornell.png}
+    \caption{Cornell Box Objects}
+    \label{fig:unlitcornell}
+\end{figure}
+
 
 \subsection{Color and Shading Models}
+Having established our scene and implemented the ability to compute intersections between rays and objects, we must find some way to use this information to simulate how light works in the real world. This involves modelling how light behaves upon hitting different surfaces.
+
 \subsubsection{Light and Material Interaction}
 The appearance of objects in a scene is influenced by how they interact with light. When light strikes a surface, it can be absorbed, reflected, or transmitted. These interactions are governed by the material properties of the surface.
 
+In the initial implementation~\ref{fig:unlitcornell}, I simplified the shading process by assigning a static color to each object upon ray intersection. In reality a ray of light will take on the colour of a surfaces albedo, due to a partial reflection of all the wavelengths of white light.
+
+This ray may then propagate through the scene, interacting with other objects and accumulating color contributions along its path. The material properties dictate whether the light is absorbed, reflected, or refracted at each interaction point. For example darker surfaces absorb more light and thus appear darker.
+
 \subsubsection{Diffuse Reflection}
-A perfectly diffuse (Lambertian) surface scatters incident light uniformly in all directions. The intensity \(I\) of the reflected light is proportional to the cosine of the angle \(\theta\) between the light direction \(\mathbf{L}\) and the surface normal \(\mathbf{N}\):
+The first material I will cover is a perfectly diffuse one as it is the easiest to understand. If a ray hits the surface it will bounce randomly in any direction (with a little less brightness). This ray will then hit something else, and so on, and so on until it reaches a max recursion depth (at which point we can return black). This type of perfectly diffuse material is not the most realistic but is a good starting point, used by many of the first raytracing papers \cite{Whitted1980}. Here is what this method would look like with global illumination:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/lambertian/uniform_diffuse.png}
+    \caption{Perfectly diffuse material}
+    \label{fig:perfdiffmat}
+\end{figure}
+
+Though this simple method yields good results, in reality, the Lambert Cosine Law comes into effect. This law states that the intensity of reflected light is dependent on the cosine of the angle between the incoming light direction and the surface normal.
+
+Therefore, we need to adjust the power of reflection according to this principle.
+The intensity \(I\) of the reflected light is proportional to the cosine of the angle \(\theta\) between the light direction \(\mathbf{L}\) and the surface normal \(\mathbf{N}\):
 \[
     I = I_0 \cdot \max(\mathbf{L} \cdot \mathbf{N}, 0)
 \]
 where \(I_0\) is the intensity of the incoming light. This cosine dependency ensures that light hitting the surface at a shallow angle contributes less to the reflected intensity.
+This type of material is called a Lambertian:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/lambertian/lambertian_diffuse.png}
+    \caption{Lambertian diffuse material}
+    \label{fig:lambdiffmat}
+\end{figure}
+
+If you look closely you will notice that the shadows are much more pronounced.
 
 \subsubsection{Specular Reflection}
-Specular reflection occurs on shiny surfaces where light is reflected in a specific direction. The reflection vector \(\mathbf{R}\) is computed as:
+Specular reflection occurs on shiny surfaces where light is reflected in a specific direction. In a perfect mirror we want to "reflect" the ray according to its angle of incidence, instead of randomly in any direction.
+The reflection vector \(\mathbf{R}\) is computed as:
 \[
     \mathbf{R} = \mathbf{L} - 2(\mathbf{L} \cdot \mathbf{N})\mathbf{N}
 \]
@@ -451,34 +459,7 @@ The intensity of the reflected light depends on the angle between the reflection
 \]
 where \(n\) is the shininess coefficient, determining the sharpness of the reflection.
 
-THIS PART IS THE PUTTING YOUR EYE CLOSE TO THE SURFACE MEANS IT WASHES OUT WITH LIGHT
-
-\subsubsection{Technical Implementation}
-GAMMA STUFF HERE Color models in code often represent colors as vectors with three components: red, green, and blue (RGB). Each component ranges from 0 to 1.
-In a Lambertian model, the scattering of rays is uniformly distributed over the hemisphere centered on the surface normal. This can be implemented using Monte Carlo techniques to randomly sample directions within the hemisphere.
-
-\begin{figure}[H]
-    \centering
-    \begin{subfigure}[b]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{images/lambertian/uniform_diffuse.png}
-        \caption{Rendered image using Uniform Diffuse Renderer}
-        \label{fig:completely_diffuse}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{images/lambertian/lambertian_diffuse.png}
-        \caption{Rendered image using Lambertian Diffuse Renderer}
-        \label{fig:lambertian_diffuse}
-    \end{subfigure}
-    \caption{Comparison of rendering techniques}
-    \label{fig:rendering_comparison}
-\end{figure}
-
-For specular materials, the direction of the reflected ray is computed using the reflection equation. This is crucial for simulating shiny surfaces such as metals and mirrors.
-
-METAL SPHERE HERE
+BETTER METAL SPHERE HERE
 
 \section{Camera Dynamics}
 \label{sec:camera}
