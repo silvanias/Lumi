@@ -270,7 +270,6 @@ b. If an intersection is found, store the intersection point and distance.
 After testing all triangles, return the closest intersection point (smallest positive \(t\)).
 
 \subsection{Placing Objects into the World}
-\subsubsection{Translation, Rotation, and Scaling}
 
 In computer graphics, assembling a scene involves not only defining the objects within it but also positioning them appropriately. Consider the classic demonstration scene known as the \textit{Cornell Box}~\cite{cornellbox}, which is a standard test for rendering algorithms to showcase accurate light transport and shading.
 From the previous sections, we've discussed how to test intersections with various geometric primitives. However, to build a complex scene like the Cornell Box, we need a systematic way to place and manipulate these objects in three-dimensional space.
@@ -352,9 +351,7 @@ Scaling \textit{is} a linear transformation which means that it can be represent
 
 where \( S_x \), \( S_y \), and \( S_z \) are the scaling factors along the \( x \), \( y \), and \( z \) axes, respectively.
 
-
-
-\subsubsection{Rotation Matrices}
+\subsubsection{Rotation}
 
 Rotation can also be represented using a 3$\times$3 matrix, but again, in practice they are represented as 4$\times$4 matrices.
 Rotations in 3D are specified with an angle (in radians) and a rotation axis, with which you rotate the object around.
@@ -411,7 +408,7 @@ With these transformations we can now easily set up the scene like so:
 \subsection{Color and Shading Models}
 Having established our scene and implemented the ability to compute intersections between rays and objects, we must find some way to use this information to simulate how light works in the real world. This involves modelling how light behaves upon hitting different surfaces.
 
-\subsubsection{Light and Material Interaction}
+\paragraph{Light and Material Interaction}
 The appearance of objects in a scene is influenced by how they interact with light. When light strikes a surface, it can be absorbed, reflected, or transmitted. These interactions are governed by the material properties of the surface.
 
 In the initial implementation~\ref{fig:unlitcornell}, I simplified the shading process by assigning a static color to each object upon ray intersection. In reality a ray of light will take on the colour of a surfaces albedo, due to a partial reflection of all the wavelengths of white light.
@@ -467,93 +464,122 @@ where \(n\) is the shininess coefficient, determining the sharpness of the refle
 \end{figure}
 
 Notice the bending of the lights in the spheres reflection.
+
 \section{Camera Dynamics}
 \label{sec:camera}
 
-\subsection{Camera and Viewing}
-\label{subsec:camera-viewing}
-
-\subsubsection{Camera Model and Rays}
-The camera in ray tracing simulates the viewpoint from which the scene is rendered. It projects rays from its origin through each pixel on the image plane, capturing the scene from a specific perspective.
+Cameras in path tracing simulate the human eye or a physical camera, capturing scenes from a specific viewpoint. The camera's parameters, such as position, orientation, and field of view, allowing us to play with the composition and visual realism of the final image.
 
 \paragraph{Basis Vectors and Camera Orientation}
+To accurately orient the camera in a scene, we create a local coordinate system using three orthonormal basis vectors: \(\mathbf{u}\), \(\mathbf{v}\), and \(\mathbf{w}\). These vectors allow us to easily project a viewport grid onto the physical pixels of our image. The vectors also allow us to move the camera's orientation and not have to worry about projection complexities.
 
-\subparagraph{Basis Vectors}
-The camera's orientation is defined by three orthonormal basis vectors: \(\mathbf{u}\), \(\mathbf{v}\), and \(\mathbf{w}\).
-\begin{itemize}
-    \item \(\mathbf{w}\): Vector pointing from the camera position to the view direction. It is computed as:
-          \[
-              \mathbf{w} = \frac{\mathbf{C} - \mathbf{L}}{\|\mathbf{C} - \mathbf{L}\|}
-          \]
-          where \(\mathbf{C}\) is the camera position and \(\mathbf{L}\) is the focal point.
-    \item \(\mathbf{u}\): Vector pointing to the right of the camera, computed using the cross product of the up vector \(\mathbf{v}_{\text{up}}\) and \(\mathbf{w}\):
-          \[
-              \mathbf{u} = \frac{\mathbf{v}_{\text{up}} \times \mathbf{w}}{\|\mathbf{v}_{\text{up}} \times \mathbf{w}\|}
-          \]
-    \item \(\mathbf{v}\): Vector pointing upwards relative to the camera, computed as:
-          \[
-              \mathbf{v} = \mathbf{w} \times \mathbf{u}
-          \]
-\end{itemize}
+The camera's orientation is specified by the following vectors:
 
-These basis vectors form a right-handed coordinate system and define the camera's orientation.
+\(\mathbf{w}\): This vector points from the camera position towards the look-at point, essentially defining the view direction. It is calculated as:
+\[
+    \mathbf{w} = \frac{\mathbf{C} - \mathbf{L}}{\|\mathbf{C} - \mathbf{L}\|}
+\]
+where \(\mathbf{C}\) represents the camera's position, and \(\mathbf{L}\) is the focal point or the point the camera is directed towards.
 
-\paragraph{Viewport and Field of View}
-The camera's field of view (FOV) determines the extent of the observable world. The vertical FOV (\(\text{vertFov}\)) is the angle of the observable world in the vertical direction:
+\(\mathbf{u}\): This vector points to the camera's right and is derived from the cross product of the global up vector \(\mathbf{v}_{\text{up}}\) and \(\mathbf{w}\):
+\[
+    \mathbf{u} = \frac{\mathbf{v}_{\text{up}} \times \mathbf{w}}{\|\mathbf{v}_{\text{up}} \times \mathbf{w}\|}
+\]
+
+\(\mathbf{v}\): This vector points upward in the camera's local space, calculated by the cross product of \(\mathbf{w}\) and \(\mathbf{u}\):
+\[
+    \mathbf{v} = \mathbf{w} \times \mathbf{u}
+\]
+
+These vectors form a right-handed coordinate system, defining the camera's spatial alignment and enabling intuitive manipulation of the camera's orientation in the scene.
+
+\subsection{Perspective Projection}
+We currently have the ability to send rays throughout a 3D scene, but a screen is a 2D plane so we must project our data into it. This is achieved by calculating a viewports dimensions from our camera's basis vectors, alongside pixel information from our applications window (I am using GLFW to manage the window).
+
+To simulate the projection of rays from the camera through each pixel on the image plane, we calculate the position of each pixel within the camera's local coordinate system. The pixel positions represent rays emanating from the camera through the viewport, defined in terms of the basis vectors \(\mathbf{u}\) and \(\mathbf{v}\).
+
+the viewport dimensions based on the vertical field of view (FOV) and the aspect ratio of the rendered image. The viewport height is computed using the trigonometric relationship:
+\[
+    \text{viewportHeight} = 2 \cdot \tan\left(\frac{\text{vertFOV}}{2}\right) \cdot \text{focalLength}
+\]
+
+The viewport width is then set according to the aspect ratio:
+\[ \text{viewportWidth} = \text{viewportHeight} \cdot \frac{\text{imageWidth}}{\text{imageHeight}}
+\] By doing this, we maintain the proportions of the scene and prevent distortion in the final rendered image.
+
+With the basis vectors established, we define the horizontal \text{viewportU} and vertical \text{viewportV} extents of the viewport:
+\[
+    \text{viewportU} = \text{viewportWidth} \cdot \mathbf{u}
+\]
+\[
+    \text{viewportV} = \text{viewportHeight} \cdot \mathbf{v}
+\]
+
+These vectors represent the physical dimensions of the viewport in the camera's local coordinate system. To calculate the movement from one pixel to the next across the image, we determine the pixel spacing (delta vectors) in both horizontal and vertical directions:
+\[
+    \text{pixelDeltaU} = \frac{\text{viewportU}}{\text{imageWidth}}
+\]
+\[
+    \text{pixelDeltaV} = \frac{\text{viewportV}}{\text{imageHeight}}
+\]
+
+Finally, we determine the position of the top-left corner of the viewport \text{viewportUpperLeft} by offsetting the camera center by the focal length along $\mathbf{w}$ and half the viewport dimensions along $\mathbf{u}$ and $\mathbf{v}$:
+\[
+    \text{viewportUpperLeft} = \mathbf{C} - (\text{focalLength} \cdot \mathbf{w}) - \frac{\text{viewportU}}{2} - \frac{\text{viewportV}}{2}
+\]
+
+The coordinates for the first pixel (the upper-left corner, \text{pixelTL}) are then calculated by adjusting this position by half a pixel's width and height:
+\[
+    \text{pixelTL} = \text{viewportUpperLeft} + 0.5 \cdot (\text{pixelDeltaU} + \text{pixelDeltaV})
+\]
+
+Iterating over the rest of the pixels in the scene is a simple matter of adding multiples of \text{pixelDeltaU} + \text{pixelDeltaV} to the top left pixel.
+
+\paragraph{Field Of View} The camera's field of view (FOV) determines how much of the scene is visible through the viewport, affecting the perceived scale and perspective:
+
+The vertical field of view (\(\text{vertFov}\)) defines the camera's vertical range:
 \[
     \text{viewportHeight} = 2 \cdot \tan\left(\frac{\text{vertFov}}{2}\right)
 \]
-The viewport width is adjusted according to the aspect ratio (\(\text{aspectRatio}\)):
+
+- The viewport width is adjusted based on the aspect ratio (\(\text{aspectRatio}\)):
 \[
     \text{viewportWidth} = \text{aspectRatio} \cdot \text{viewportHeight}
 \]
 
-\paragraph{Perspective Projection}
-To generate rays from the camera through each pixel, we calculate the position of each pixel in the camera's coordinate system. The pixel positions are offset from a reference point (the upper-left corner of the viewport) by the basis vectors \(\mathbf{u}\) and \(\mathbf{v}\).
+These parameters ensure that the scene is rendered with the correct proportions and perspective, replicating how a real-world camera captures a scene. We can also manipulate the FOV to get some artistic effects:
 
-\subsubsection{Technical Implementation}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/highFOV_cornell.png}
+    \caption{Cornell box rendered with high FOV}
+    \label{fig:highFOVBox}
+\end{figure}
 
-\paragraph{Initialization and Basis Vector Calculation}
-The `initialize` method sets up the camera's coordinate system using the basis vectors:
+The geometry of the Cornell box has remained identical, however we have achieved an effective emulation of a "Fish-eye" lens.
 
-\begin{minted}{cpp}
-void Camera::initialize() {
-    float theta = glm::radians(vert_fov);
-    float h = tan(theta / 2);
-    float viewport_height = 2.0f * h;
-    float viewport_width = viewport_height * float(image_width) / float(image_height);
+\subsection{Camera Aliasing}
+The camera model is fundamental to the ray tracing process, simulating the viewpoint from which the scene is observed. It generates rays from the camera's origin, passing through each pixel on the image plane:
 
-    w = glm::normalize(center - look_at);
-    u = glm::normalize(glm::cross(vup, w));
-    v = glm::cross(w, u);
+A crucial challenge in rendering involves aliased edges, where a pixel either hits an object or misses it entirely. This binary decision creates jagged edges, as briefly referenced in the aliased interaction in Figure \ref{fig:aliasedintersection}.
 
-    pixel00_loc = center - (u * viewport_width / 2.0f) - (v * viewport_height / 2.0f) - w;
-    pixel_delta_u = u * viewport_width / float(image_width);
-    pixel_delta_v = v * viewport_height / float(image_height);
-}
-\end{minted}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/aliasing/no-aliasing.png}
+    \caption{Aliased interactions}
+    \label{fig:aliasedintersection}
+\end{figure}
 
-Here,
-\begin{itemize}
-    \item \(\mathbf{w}\) is calculated as the normalized vector from the camera position to the look-at point.
-    \item \(\mathbf{u}\) is the normalized cross product of the up vector and \(\mathbf{w}\).
-    \item \(\mathbf{v}\) is the cross product of \(\mathbf{w}\) and \(\mathbf{u}\).
-\end{itemize}
+To address this, we employ anti-aliasing techniques. One effective method is Super Sampling Anti-Aliasing (SSAA), where multiple samples per pixel are taken, and their colors are averaged. By randomly choosing a direction within the pixel, we smooth out the transitions and enhance image quality:
 
-\paragraph{Ray Generation}
-The method `getRandomRay` generates rays from the camera through each pixel, considering anti-aliasing by randomly offsetting the ray within the pixel:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/aliasing/aliased.png}
+    \caption{SSAA intersections}
+    \label{fig:antialiasedintersection}
+\end{figure}
 
-\begin{minted}{cpp}
-Ray Camera::getRandomRay(int x, int y) const {
-    float u_offset = (x + random_float()) * recip_sqrt_sppf;
-    float v_offset = (y + random_float()) * recip_sqrt_sppf;
-    glm::vec3 ray_origin = center;
-    glm::vec3 ray_direction = glm::normalize(pixel00_loc + u_offset * pixel_delta_u + v_offset * pixel_delta_v - center);
-    return Ray(ray_origin, ray_direction);
-}
-\end{minted}
-
-This method uses the basis vectors to compute the direction of the rays passing through each pixel, incorporating random offsets to achieve anti-aliasing. This process ensures that each pixel's color is the result of multiple samples, reducing aliasing and producing a smoother image.
+SSAA significantly reduces aliasing artifacts, producing more realistic and visually appealing results by blurring the sharp transitions at object boundaries. The significant downside is that SSAA is incredibly expensive to perform, if we want 16xSSAA then our computation time will also 16x.
 
 \section{Acceleration Structures}
 \label{sec:acceleration-structures}
@@ -641,28 +667,25 @@ The main control loop orchestrates rendering, coordinating ray generation, shadi
 
 \subsection{Core Components}
 
-\subsubsection{Geometry: An Abstraction for Hittable Objects}
-Provides a unified interface for diverse geometrical shapes.
+\paragraph{Geometry: An Abstraction for Hittable Objects} Provides a unified interface for diverse geometrical shapes.
 
-\subsubsection{Bounding Structures: Use of BVH for Efficient Intersection Tests}
+\paragraph{Bounding Structures: Use of BVH for Efficient Intersection Tests}
 Employs BVH for accelerated intersection tests, enhancing performance.
 
-\subsubsection{Scene Manager: Object Storage and Scene Graph Management}
+\paragraph{Scene Manager: Object Storage and Scene Graph Management}
 The Scene Manager organizes objects in a scene graph, optimizing rendering operations.
 
-\subsubsection{Renderer: Ray Generation and Intersection Handling}
+\paragraph{Renderer: Ray Generation and Intersection Handling}
 Handles ray generation and calculates light interactions with surfaces.
 
-\subsubsection{Camera Module: Virtual Camera Settings and Primary Ray Generation}
+\paragraph{Camera Module: Virtual Camera Settings and Primary Ray Generation}
 Simulates camera properties and generates primary rays for rendering.
 
 \subsection{Utilising OpenGL for Visualising Convergence}
 
 In traditional path tracing implementations, the final image is typically output once the required number of samples per pixel has been reached. However, this approach doesn't provide insight into the convergence process. To address this limitation, we've implemented a progressive rendering system using OpenGL, allowing for real-time visualization of the path tracing process.
 
-\subsubsection{Progressive Rendering}
-
-The core of this visualization technique is the accumulation buffer. Instead of directly outputting the final pixel colors, we continuously update an accumulation buffer:
+\paragraph{Progressive Rendering} The core of this visualization technique is the accumulation buffer. Instead of directly outputting the final pixel colors, we continuously update an accumulation buffer:
 
 \begin{minted}{cpp}
 vector<vec3> accumulationBuffer(IMAGE_SIZE, 0);
@@ -693,25 +716,25 @@ const int &WIDTH, const int &HEIGHT)
 MENTION MAPPING TO A UNIFORM 2D IN FRAGMENT SHADER AND OPENGL PIPELINE HERE
 This texture is then rendered onto a quad that fills the entire screen, allowing for real-time updates of the rendering progress.
 
-\subsubsection{Benefits of Real-time Visualization}
+\paragraph{Benefits of Real-time Visualization}
 
 This approach offers several advantages:
 
-\begin{enumerate}
+\begin{itemize}
     \item Parameter Tuning: Real-time visualization allows for quick iterations when adjusting rendering parameters, as the effects of changes are immediately visible.
     \item Debugging Aid: It becomes easier to identify and debug issues in the path tracing algorithm as they manifest visually during rendering.
     \item Progress Monitoring: Users can make informed decisions about when to terminate the rendering based on the current image quality.
-\end{enumerate}
+\end{itemize}
 
-\subsubsection{Architecture Considerations}
+\paragraph{Architecture Considerations}
 
 The integration of OpenGL for visualization required careful consideration of the system architecture:
 
-\begin{enumerate}
+\begin{itemize}
     \item Separation of Concerns: The core path tracing logic remains separate from the visualization code, maintaining modularity.
     \item Efficient Data Transfer: The accumulation buffer serves as an intermediate representation, minimizing data transfer between the CPU and GPU. MENTION HOW SLOW IT IS/ CPU PATH TRACING VS
     \item Flexible Rendering Pipeline: The system is designed to allow easy switching between progressive rendering and traditional batch rendering if needed. CODE HERE?
-\end{enumerate}
+\end{itemize}
 
 By leveraging OpenGL for real-time visualization, we've enhanced the path tracer's utility as both a rendering tool and a development aid, providing deeper insights into the rendering process and facilitating more efficient algorithm refinement.
 
