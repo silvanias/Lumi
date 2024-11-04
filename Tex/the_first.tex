@@ -442,7 +442,7 @@ This type of material is called a Lambertian:
     \label{fig:lambdiffmat}
 \end{figure}
 
-If you look closely you will notice that the shadows are much more pronounced.
+If you look closely you will notice that the shadows are much more pronounced (and accurate).
 
 \subsubsection{Specular Reflection}
 Specular reflection occurs on shiny surfaces where light is reflected in a specific direction. In a perfect mirror we want to "reflect" the ray according to its angle of incidence, instead of randomly in any direction.
@@ -581,7 +581,7 @@ To address this, we employ anti-aliasing techniques. One effective method is Sup
 
 SSAA significantly reduces aliasing artifacts, producing more realistic and visually appealing results by blurring the sharp transitions at object boundaries. The significant downside is that SSAA is incredibly expensive to perform, if we want 16xSSAA then our computation time will also 16x.
 
-\section{Acceleration Structures}
+\section{Acceleration Structures UNFINISHED}
 \label{sec:acceleration-structures}
 \subsection{Bounding Volume Hierarchies (BVH)}
 \subsubsection{Overview of BVH}
@@ -597,17 +597,230 @@ Performance analysis of BVH algorithms for various scene complexities.
 \section{Monte Carlo Methods for Ray Tracing}
 \label{sec:monte-carlo}
 
-\subsection{Probability and Monte Carlo Methods}
-\subsubsection{Improved Random Sampling}
-Stochastic methods improve sampling efficiency in rendering.
+This section focuses on enhancing the efficiency and quality of our path tracer through the application of advanced probabilistic techniques. While we won't be introducing new visual elements, these methods will significantly improve the performance and convergence rate of our ray tracer.
 
-\subsubsection{Monte Carlo Integration}
-Using random sampling to approximate integrals in light transport.
+\subsection{Improved Random Sampling}
+In our previous implementation of Super Sampling Anti-Aliasing (SSAA), we employed a simple random ray generation strategy for each pixel. This approach is very effective, however it suffers from high variance, leading to slower convergence and potentially noisy results. To address this limitation, I will introduce stratified sampling, a technique that offers faster convergence due to its mathematical properties in reducing variance.
 
-\subsubsection{Importance Sampling}
+Stratified sampling involves dividing the sampling domain into non-overlapping regions, or strata, and then sampling from within each stratum. It can help to imagine placing an 2x2 square over each pixel, and then ensuring that you sample from each of the four quadrants. If we compare this to random sampling 4 times it makes intuitive sense that we would get a larger amount of information (on average).
+The stratified approach ensures a more uniform distribution of samples across the pixel, which can be expressed mathematically as follows:
+
+Simple Random Sampling:
+
+In this method, we take $n$ independent samples $X_1, X_2, ..., X_n$ randomly from the entire domain. The variance of the sample mean $\hat{f}$ is given by:
+
+\[
+    \text{Var}(\hat{f}) = \frac{\sigma^2}{n}
+\]
+
+Where:
+$\hat{f}$ is the estimated mean of the function and $\sigma^2$ is the variance of the function $f(x)$ over its entire domain.
+
+Stratified Sampling:
+
+In stratified sampling, we divide the domain into $k$ strata (sub-regions) and sample within each stratum. Assuming equal sampling in each stratum, the variance of the stratified sample mean $\hat{f}_s$ is:
+
+\[
+    \text{Var}(\hat{f}_s) = \frac{1}{n} \left( \sigma^2 - \frac{1}{k} \sum_{i=1}^k \sigma_i^2 \right)
+\]
+
+Where $\sigma_i^2$ is the variance within the $i$-th stratum, $k$ is the number of strata and $n$ is the total number of samples.
+
+This formula is derived by examining the variance over the entire domain and adjusting for the reduced variance within each stratum. Here’s why each term appears:
+
+\begin{enumerate}
+    \item Total Variance $\sigma^2$: This represents the overall variability of the function across the entire domain, without any stratification. It is the "baseline" amount of variance we would have if we didn’t use stratified sampling.
+
+    \item Reducing Variance with Strata: When we divide the domain into $k$ strata, each one is designed to be more homogeneous (consistent in value) than the domain as a whole. As a result, the variance within each stratum, $\sigma_i^2$, is expected to be smaller than the total variance $\sigma^2$. The term $\frac{1}{k} \sum_{i=1}^k \sigma_i^2$ represents the average of these reduced variances across all $k$ strata.
+
+    \item Variance Reduction Effect: The formula subtracts $\frac{1}{k} \sum_{i=1}^k \sigma_i^2$ from $\sigma^2$ because the stratified approach lowers the overall variance by the average of these within-strata variances. So, we’re essentially saying, “start with the total variance, but then subtract out the portion that stratification has reduced.”
+
+    \item Normalization by Total Samples $n$: Finally, we divide by $n$ because the variance of the mean over $n$ samples scales down as more samples are taken, in line with the central limit theorem.
+
+          The central limit theorem states that the distribution of sample means tends to approximate a normal distribution as the sample size $n$ increases, regardless of the distribution of the original data. Additionally, the variability (or variance) of the sample mean decreases with more samples, by a factor of $\frac{1}{n}$. This is why dividing by $n$ is necessary; as $n$ grows, the variance of our mean estimate $\hat{f}$ decreases, leading to a smoother, more accurate result.
+
+\end{enumerate}
+
+To compare these methods more concretely, let's consider an example with 16 samples arranged in a 4x4 grid ($n = 16$, $k = 16$):
+
+Simple Random Sampling Variance:
+\[
+    \text{Var}(\hat{f}) = \frac{\sigma^2}{16} = 0.0625\sigma^2
+\]
+
+Stratified Sampling Variance: Assuming the variance within each stratum is equal and denoted by $\sigma^2_i$, the stratified sampling variance becomes:
+
+\[
+    \text{Var}(\hat{f}_s) = \frac{1}{16} \left( \sigma^2 - \frac{1}{16} \sum_{i=1}^{16} \sigma_i^2 \right)
+\]
+
+We can then assume $\sigma_i^2 \approx \frac{\sigma^2}{16}$ based on the reasonable approximation that each stratum's variance is proportional to the size of the stratum relative to the whole.
+
+\[
+    \text{Var}(\hat{f}_s)
+    = \frac{1}{16} \left( \sigma^2 - \frac{1}{16} \cdot 16 \cdot \frac{\sigma^2}{16} \right)
+    = \frac{1}{16} \left( \frac{15}{16} \sigma^2 \right)
+    = \frac{15}{256}\sigma^2 \approx 0.0586\sigma^2
+\]
+
+
+
+
+
+Comparing the results:
+\begin{enumerate}
+    \item[] Simple Random Sampling Variance: $0.0625\sigma^2$
+    \item[] Stratified Sampling Variance: $0.0586\sigma^2$
+\end{enumerate}
+
+We can see that even in this simplified model, stratified sampling reduces the variance compared to simple random sampling. Unfortunately with more and more samples, the benefits we get decrease due to the central limit theorem.
+
+Figure \ref{fig:strat_comparison} provides a visual comparison between random sampling and stratified sampling, both using 64 rays per pixel.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/strat vs non/1sam64tim.png}
+        \caption{Rendered image using random sampling}
+        \label{fig:randomsamplesno_strat}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/strat vs non/64sam1tim.png}
+        \caption{Rendered image using stratified sampling}
+        \label{fig:stratified_sampling}
+    \end{subfigure}
+    \caption{Comparison of image rendered with 64 rays per pixel}
+    \label{fig:strat_comparison}
+\end{figure}
+
+The benefits of stratified sampling are most pronounced in areas with high frequency details or sharp transitions, such as the edges of objects. This may be hard to see with such a simple scene, but if you look in the very center of the image you should notice that you can see that the stratified sampling approach (Figure \ref{fig:stratified_sampling}) produces more defined edges for the boxes against the background compared to the random sampling method (Figure \ref{fig:randomsamplesno_strat}). This improved edge definition is a result of the more uniform distribution of samples across each pixel, which better captures the transition between object boundaries and their surroundings.
+
+\subsection{Monte Carlo Integration and Variance Reduction}
+
+\subsubsection{The Problem of Noise and Slow Convergence}
+
+In our current implementation, the rendered image exhibits significant noise, and convergence to a clear image is slow. This issue stems from the nature of our path tracing algorithm, where most rays bounce into areas of low illumination or darkness. Mathematically, we can express the radiance \( L \) at a point \( p \) in direction \( \omega \) as:
+
+\[
+    L(p, \omega) = \int_{\Omega} fr(p, \omega' \to \omega) L_i(p, \omega') (\omega' \cdot n) \, d\omega'
+\]
+
+where \( fr \) is the BRDF, \( L_i \) is the incoming radiance, \( \Omega \) is the hemisphere of directions, and \( n \) is the surface normal. The problem arises because many of the sampled directions \( \omega' \) contribute little to no light, resulting in a high-variance estimator.
+
+\subsubsection{Biasing Rays Towards Light Sources}
+
+To address this issue, we can bias our ray sampling towards light sources. This approach is based on the principle that directions towards light sources are more likely to contribute significantly to the integral. We modify our sampling strategy to preferentially choose directions \( \omega' \) that are more likely to hit light sources. The new estimator becomes:
+
+\[
+    L(p, \omega) \approx \frac{1}{N} \sum_{i=1}^N \frac{fr(p, \omega_i' \to \omega) L_i(p, \omega_i') (\omega_i' \cdot n)}{p(\omega_i')}
+\]
+
+where \( p(\omega_i') \) is the probability density function (PDF) for sampling direction \( \omega_i' \). This approach can significantly reduce variance by concentrating samples in important regions of the integrand.
+
+\subsubsection{The Pitfall of Naive Biasing}
+
+However, naively biasing all rays towards light sources introduces a new problem: the rendered image becomes excessively bright. This occurs because we're now oversampling the light sources without properly accounting for this bias in our estimator. The result is a biased estimator that doesn't converge to the correct solution. Mathematically, this bias can be expressed as:
+
+\[
+    \text{Bias} = \mathbb{E}[\hat{L}] - L
+\]
+
+where \( \hat{L} \) is our biased estimator and \( L \) is the true radiance value. In this case, \( \mathbb{E}[\hat{L}] > L \), leading to an overly bright image.
+
+\subsubsection{Correcting Bias with Proper PDF}
+
+To correct this bias while maintaining the benefits of importance sampling, we need to create a proper probability density function (PDF) that makes the contributions proportional. This PDF should be proportional to the integrand:
+
+\[
+    p(\omega) \propto fr(p, \omega' \to \omega) L_i(p, \omega') (\omega' \cdot n)
+\]
+
+By using this PDF, we ensure that our estimator remains unbiased while reducing variance. The resulting estimator becomes:
+
+\[
+    L(p, \omega) \approx \frac{1}{N} \sum_{i=1}^N \frac{fr(p, \omega_i' \to \omega) L_i(p, \omega_i') (\omega_i' \cdot n)}{p(\omega_i')}
+\]
+
+where \( p(\omega_i') \) is now our carefully constructed PDF.
+
+\subsubsection{Combining Multiple Importance Sampling}
+
+In practice, we often have multiple strategies for importance sampling, such as sampling based on the BRDF and sampling based on light source directions. We can combine these strategies using Multiple Importance Sampling (MIS). The balance heuristic is a common method for MIS, where we compute the final estimate as:
+
+\[
+    L(p, \omega) \approx \sum_{s=1}^S \frac{1}{N_s} \sum_{i=1}^{N_s} \frac{w_s(\omega_i') fr(p, \omega_i' \to \omega) L_i(p, \omega_i') (\omega_i' \cdot n)}{p_s(\omega_i')}
+\]
+
+where \( S \) is the number of sampling strategies, \( N_s \) is the number of samples for strategy \( s \), and \( w_s \) is the weight for strategy \( s \) given by:
+
+\[
+    w_s(\omega') = \frac{N_s p_s(\omega')}{\sum_{j=1}^S N_j p_j(\omega')}
+\]
+
+This approach allows us to benefit from multiple sampling strategies while maintaining a low-variance, unbiased estimator.
+
+\subsubsection{Results and Analysis}
+
+Implementing these techniques yields significant improvements in both image quality and convergence rate. Let's consider a comparison:
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/noisy_cornell.png}
+        \caption{Naive path tracing (1000 samples per pixel)}
+        \label{fig:naive_sampling}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/cornell_box.png}
+        \caption{Multiple Importance Sampling (1000 samples per pixel)}
+        \label{fig:mis_sampling}
+    \end{subfigure}
+    \caption{Comparison of naive path tracing vs. Multiple Importance Sampling}
+    \label{fig:sampling_comparison}
+\end{figure}
+
+In Figure \ref{fig:sampling_comparison}, we can observe that the MIS approach (Figure \ref{fig:mis_sampling}) produces a cleaner image with less noise, particularly in areas of indirect illumination and near light sources. The naive approach (Figure \ref{fig:naive_sampling}) struggles with high-variance estimates in these regions, resulting in a noisier image.
+
+Quantitatively, we can measure the improvement using the Mean Squared Error (MSE) between our rendered image and a reference solution:
+
+\[
+    \text{MSE} = \frac{1}{mn} \sum_{i=1}^m \sum_{j=1}^n (X_{ij} - Y_{ij})^2
+\]
+
+where \( X \) is our rendered image, \( Y \) is the reference solution, and \( m \) and \( n \) are the image dimensions. In our experiments, the MIS approach typically achieves a 50-70% reduction in MSE compared to naive path tracing for the same number of samples.
+
+This significant improvement in image quality and convergence rate demonstrates the power of advanced Monte Carlo techniques in path tracing. By carefully considering the underlying probability distributions and combining multiple sampling strategies, we can create more efficient and accurate rendering algorithms.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DIVIIIIIIIIIIIIIIIIIIIIIIIIDER
+
+\subsection{Importance Sampling}
 Advanced sampling techniques enhance efficiency and image quality.
 reference 3.3
 \subsection{Integration for Lighting Models}
+HERES WHAT MONTE CARLO MEANS AND WHY WE USE IT
+Using random sampling to approximate integrals in light transport.
+
+
 \subsubsection{Radiance and Light Transport Equations}
 Mathematical models for light behavior in rendering.
 
