@@ -399,7 +399,7 @@ POTENTIALLY A SECTION HERE TALKING ABOUT PERFORMANCE AND TRANSFORMING VECTORS IN
 With these transformations we can now easily set up the scene like so:
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/no_lighting_cornell.png}
+    \includegraphics[width=0.5\textwidth]{images/artsy_rep/no_lighting_cornell.png}
     \caption{Cornell Box Objects}
     \label{fig:unlitcornell}
 \end{figure}
@@ -458,7 +458,7 @@ where \(n\) is the shininess coefficient, determining the sharpness of the refle
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/specular_sphere.png}
+    \includegraphics[width=0.5\textwidth]{images/artsy_rep/specular_sphere.png}
     \caption{Specular material}
     \label{fig:specmat}
 \end{figure}
@@ -551,7 +551,7 @@ These parameters ensure that the scene is rendered with the correct proportions 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/highFOV_cornell.png}
+    \includegraphics[width=0.5\textwidth]{images/artsy_rep/highFOV_cornell.png}
     \caption{Cornell box rendered with high FOV}
     \label{fig:highFOVBox}
 \end{figure}
@@ -698,19 +698,18 @@ The benefits of stratified sampling are most pronounced in areas with high frequ
 
 \paragraph{The Problem of Noise and Slow Convergence} The current theory mentioned allows for an elegant pathtracer which is capable of producing visually realistic images, however it has some very fundamental problems. To illustrate these let's look at our cornell box scene with one ray fired per pixel (so no SSAA), and a maximum bounce of 1000 (much higher than 99% of rays will get to).
 
-NEW IMAGE HERE
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/aliasing/aliased.png}
+    \includegraphics[width=0.5\textwidth]{images/random_one_sample_cornell.png}
     \caption{One Sample Cornell box}
     \label{fig:onesampcornell}
 \end{figure}
 
+As we can see most rays bounce around, never hit a light and then bounce back out of the box into the darkness. Because of this the vast majority of our rays contribute no color to our scene.
 
-In our current implementation, the rendered image exhibits significant noise, and convergence to a clear image is slow. Fundamentally, this stems from our path tracing algorithm, in which we bounce rays randomly throughout a scene.
 
-
-Most rays bounce into areas of low illumination or darkness. Mathematically, we can express the radiance \( L \) at a point \( p \) in direction \( \omega \) as:
+TODO: WHERE CAN I FIT IN THE RENDERING EQUATION IDK.
+Mathematically, we can express the radiance \( L \) at a point \( p \) in direction \( \omega \) as:
 
 \[
     L(p, \omega) = \int_{\Omega} fr(p, \omega' \to \omega) L_i(p, \omega') (\omega' \cdot n) \, d\omega'
@@ -718,7 +717,7 @@ Most rays bounce into areas of low illumination or darkness. Mathematically, we 
 
 where \( fr \) is the BRDF, \( L_i \) is the incoming radiance, \( \Omega \) is the hemisphere of directions, and \( n \) is the surface normal. The problem arises because many of the sampled directions \( \omega' \) contribute little to no light, resulting in a high-variance estimator.
 
-\subsubsection{Biasing Rays Towards Light Sources}
+\paragraph{Biasing Rays Towards Light Sources}
 
 To address this issue, we can bias our ray sampling towards light sources. This approach is based on the principle that directions towards light sources are more likely to contribute significantly to the integral. We modify our sampling strategy to preferentially choose directions \( \omega' \) that are more likely to hit light sources. The new estimator becomes:
 
@@ -727,6 +726,27 @@ To address this issue, we can bias our ray sampling towards light sources. This 
 \]
 
 where \( p(\omega_i') \) is the probability density function (PDF) for sampling direction \( \omega_i' \). This approach can significantly reduce variance by concentrating samples in important regions of the integrand.
+
+\subparagraph{Implementing Importance Sampling}
+To implement this, we need to adjust our probability distribution function (PDF) to favor these important directions. Using the example of directly sampling the light, the PDF can be adjusted as follows:
+
+\[
+    p(\omega) = \frac{\operatorname{distance}^2(p,q)}{\cos(\theta) \cdot A}
+\]
+
+where \( A \) is the area of the light source, \( \theta \) is the angle between the surface normal and the direction \( \omega \), and \(\operatorname{distance}(p,q)\) is the distance from point \( p \) to a point \( q \) on the light source.
+
+This sampling approach ensures that rays directed towards light sources are given higher probability, thereby increasing the number of meaningful samples and reducing noise in the final render.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/importancesampled_cornell.png}
+    \caption{Importance Sampled Cornell Box}
+    \label{fig:importancesampled}
+\end{figure}
+
+As illustrated in Figure \ref{fig:importancesampled}, importance sampling exhibits a more balanced and accurate distribution of light contributions, reducing noise and enhancing the image quality with fewer samples.
+Fe
 
 \subsubsection{The Pitfall of Naive Biasing}
 
@@ -804,20 +824,6 @@ Quantitatively, we can measure the improvement using the Mean Squared Error (MSE
 where \( X \) is our rendered image, \( Y \) is the reference solution, and \( m \) and \( n \) are the image dimensions. In our experiments, the MIS approach typically achieves a 50-70% reduction in MSE compared to naive path tracing for the same number of samples.
 
 This significant improvement in image quality and convergence rate demonstrates the power of advanced Monte Carlo techniques in path tracing. By carefully considering the underlying probability distributions and combining multiple sampling strategies, we can create more efficient and accurate rendering algorithms.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 \section{Technical Description of the System}
 \label{sec:system-description}
