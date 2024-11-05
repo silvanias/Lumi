@@ -677,14 +677,14 @@ Figure \ref{fig:strat_comparison} provides a visual comparison between random sa
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/strat vs non/1sam64tim.png}
+        \includegraphics[width=\textwidth]{images/strat_vs_non/1sam64tim.png}
         \caption{Rendered image using random sampling}
         \label{fig:randomsamplesno_strat}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/strat vs non/64sam1tim.png}
+        \includegraphics[width=\textwidth]{images/strat_vs_non/64sam1tim.png}
         \caption{Rendered image using stratified sampling}
         \label{fig:stratified_sampling}
     \end{subfigure}
@@ -700,13 +700,12 @@ The benefits of stratified sampling are most pronounced in areas with high frequ
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/random_one_sample_cornell.png}
+    \includegraphics[width=0.5\textwidth]{images/one_samp/random_sample.png}
     \caption{One Sample Cornell box}
     \label{fig:onesampcornell}
 \end{figure}
 
 As we can see most rays bounce around, never hit a light and then bounce back out of the box into the darkness. Because of this the vast majority of our rays contribute no color to our scene.
-
 
 TODO: WHERE CAN I FIT IN THE RENDERING EQUATION IDK.
 Mathematically, we can express the radiance \( L \) at a point \( p \) in direction \( \omega \) as:
@@ -719,46 +718,18 @@ where \( fr \) is the BRDF, \( L_i \) is the incoming radiance, \( \Omega \) is 
 
 \paragraph{Biasing Rays Towards Light Sources}
 
-To address this issue, we can bias our ray sampling towards light sources. This approach is based on the principle that directions towards light sources are more likely to contribute significantly to the integral. We modify our sampling strategy to preferentially choose directions \( \omega' \) that are more likely to hit light sources. The new estimator becomes:
-
-\[
-    L(p, \omega) \approx \frac{1}{N} \sum_{i=1}^N \frac{fr(p, \omega_i' \to \omega) L_i(p, \omega_i') (\omega_i' \cdot n)}{p(\omega_i')}
-\]
-
-where \( p(\omega_i') \) is the probability density function (PDF) for sampling direction \( \omega_i' \). This approach can significantly reduce variance by concentrating samples in important regions of the integrand.
-
-\subparagraph{Implementing Importance Sampling}
-To implement this, we need to adjust our probability distribution function (PDF) to favor these important directions. Using the example of directly sampling the light, the PDF can be adjusted as follows:
-
-\[
-    p(\omega) = \frac{\operatorname{distance}^2(p,q)}{\cos(\theta) \cdot A}
-\]
-
-where \( A \) is the area of the light source, \( \theta \) is the angle between the surface normal and the direction \( \omega \), and \(\operatorname{distance}(p,q)\) is the distance from point \( p \) to a point \( q \) on the light source.
-
-This sampling approach ensures that rays directed towards light sources are given higher probability, thereby increasing the number of meaningful samples and reducing noise in the final render.
+To address this issue, we can bias our ray sampling towards light sources. Naive approach is to SIMPLE PICK A RANDOM POINT ON THE LIGHT AND SEND IT TOWARDS IT. will look like this:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/importancesampled_cornell.png}
-    \caption{Importance Sampled Cornell Box}
-    \label{fig:importancesampled}
+    \includegraphics[width=0.5\textwidth]{images/one_samp/towards_light_no_pdf.png}
+    \caption{Sampling towards a light}
+    \label{fig:onesampimportancenopdf}
 \end{figure}
 
-As illustrated in Figure \ref{fig:importancesampled}, importance sampling exhibits a more balanced and accurate distribution of light contributions, reducing noise and enhancing the image quality with fewer samples.
-Fe
+CLEAR NOW THAT WE HAVE THE OPPOSITE PROBlEM! Maively biasing all rays towards light sources introduces a new problem: the rendered image becomes excessively bright. This occurs because we're now oversampling the light sources without properly accounting for this bias in our estimator.
 
-\subsubsection{The Pitfall of Naive Biasing}
-
-However, naively biasing all rays towards light sources introduces a new problem: the rendered image becomes excessively bright. This occurs because we're now oversampling the light sources without properly accounting for this bias in our estimator. The result is a biased estimator that doesn't converge to the correct solution. Mathematically, this bias can be expressed as:
-
-\[
-    \text{Bias} = \mathbb{E}[\hat{L}] - L
-\]
-
-where \( \hat{L} \) is our biased estimator and \( L \) is the true radiance value. In this case, \( \mathbb{E}[\hat{L}] > L \), leading to an overly bright image.
-
-\subsubsection{Correcting Bias with Proper PDF}
+\subsubsection{Correcting Bias}
 
 To correct this bias while maintaining the benefits of importance sampling, we need to create a proper probability density function (PDF) that makes the contributions proportional. This PDF should be proportional to the integrand:
 
@@ -774,7 +745,40 @@ By using this PDF, we ensure that our estimator remains unbiased while reducing 
 
 where \( p(\omega_i') \) is now our carefully constructed PDF.
 
+To implement this, we need to adjust our probability distribution function (PDF) to favor these important directions. Using the example of directly sampling the light, the PDF can be adjusted as follows:
+
+\[
+    p(\omega) = \frac{\operatorname{distance}^2(p,q)}{\cos(\theta) \cdot A}
+\]
+
+where \( A \) is the area of the light source, \( \theta \) is the angle between the surface normal and the direction \( \omega \), and \(\operatorname{distance}(p,q)\) is the distance from point \( p \) to a point \( q \) on the light source.
+
+We modify our sampling strategy to preferentially choose directions \( \omega' \) that are more likely to hit light sources. The new estimator becomes:
+
+\[
+    L(p, \omega) \approx \frac{1}{N} \sum_{i=1}^N \frac{fr(p, \omega_i' \to \omega) L_i(p, \omega_i') (\omega_i' \cdot n)}{p(\omega_i')}
+\]
+
+where \( p(\omega_i') \) is the probability density function (PDF) for sampling direction \( \omega_i' \). This approach can significantly reduce variance by concentrating samples in important regions of the integrand.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/one_samp/towards_light_pdf.png}
+    \caption{Importance Sampled Cornell Box}
+    \label{fig:importancesampled}
+\end{figure}
+
+As illustrated in Figure \ref{fig:importancesampled}, importance sampling exhibits a more balanced and accurate distribution of light contributions, reducing noise and enhancing the image quality with fewer samples.
+
 \subsubsection{Combining Multiple Importance Sampling}
+
+Now that we have a method of getting a picture of our scene very quickly we also want to retain our beautiful scattered bouncing, which captures much more complex lighting interactions. There are many ways to do this, but I will demonstrate a very simple one.
+
+If we represent our previous scattered sampling also as a PDF, we can easily combine the both of them:
+
+MATHS HERE
+
+And then have a very quick image, which also converges to a very pretty image over time.
 
 In practice, we often have multiple strategies for importance sampling, such as sampling based on the BRDF and sampling based on light source directions. We can combine these strategies using Multiple Importance Sampling (MIS). The balance heuristic is a common method for MIS, where we compute the final estimate as:
 
@@ -788,11 +792,19 @@ where \( S \) is the number of sampling strategies, \( N_s \) is the number of s
     w_s(\omega') = \frac{N_s p_s(\omega')}{\sum_{j=1}^S N_j p_j(\omega')}
 \]
 
-This approach allows us to benefit from multiple sampling strategies while maintaining a low-variance, unbiased estimator.
+Combining the two PDFs results in this image:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/one_samp/combined_pdf.png}
+    \caption{Combined PDF Importance Sampled Cornell Box}
+    \label{fig:combinedPDFimportancesampled}
+\end{figure}
+
 
 \subsubsection{Results and Analysis}
 
-Implementing these techniques yields significant improvements in both image quality and convergence rate. Let's consider a comparison:
+Implementing these techniques yields significant improvements in both image quality and convergence rate. I'll take this section to demonstrate how crazy of an improvement it is.
 
 \begin{figure}[H]
     \centering

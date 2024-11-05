@@ -19,3 +19,10 @@ Split down longest axis BVH:
 Current render time: 6.60061 seconds, Average render time: 6.5945 seconds, Number of runs: 10
 No BVH:
 Current render time: 5.52864 seconds, Average render time: 5.50982 seconds, Number of runs: 100
+
+RANDOM SCATTERING SAMPLING:
+
+
+COMBINED PDF IMPORTANCE SAMPLING:
+78.7 seconds, average render time of 3.14 seconds, number of runs: 25
+
