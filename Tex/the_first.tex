@@ -810,18 +810,18 @@ Implementing these techniques yields significant improvements in both image qual
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/noisy_cornell.png}
-        \caption{Naive path tracing (1000 samples per pixel)}
+        \includegraphics[width=\textwidth]{images/25_samp/randomPDF.png}
+        \caption{Naive path tracing}
         \label{fig:naive_sampling}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/cornell_box.png}
-        \caption{Multiple Importance Sampling (1000 samples per pixel)}
+        \includegraphics[width=\textwidth]{images/25_samp/combPDF.png}
+        \caption{Multiple Importance Sampling}
         \label{fig:mis_sampling}
     \end{subfigure}
-    \caption{Comparison of naive path tracing vs. Multiple Importance Sampling}
+    \caption{Comparison of naive path tracing vs. Multiple Importance Sampling (Both 25 samples per pixel)}
     \label{fig:sampling_comparison}
 \end{figure}
 
@@ -834,6 +834,18 @@ Quantitatively, we can measure the improvement using the Mean Squared Error (MSE
 \]
 
 where \( X \) is our rendered image, \( Y \) is the reference solution, and \( m \) and \( n \) are the image dimensions. In our experiments, the MIS approach typically achieves a 50-70% reduction in MSE compared to naive path tracing for the same number of samples.
+
+
+IN CONCLUSION BIG NUMBER IT IS THIS MUCH BETTER IN IMAGE QUALITY AND THIS MUCH QUICKER
+
+
+SHOULD BE STRESSED THEY WILL EVENTUALLY ARRIVE AT THE SAME IMAGE, END GOAL IS FUNDAMENTALLY THE SAME. ITS JUST FASTER NOW.
+
+RANDOM SCATTERING SAMPLING:
+156.8 seconds, average render time of 6.27 seconds, number of runs: 25
+
+COMBINED PDF IMPORTANCE SAMPLING:
+78.7 seconds, average render time of 3.14 seconds, number of runs: 25
 
 This significant improvement in image quality and convergence rate demonstrates the power of advanced Monte Carlo techniques in path tracing. By carefully considering the underlying probability distributions and combining multiple sampling strategies, we can create more efficient and accurate rendering algorithms.
 

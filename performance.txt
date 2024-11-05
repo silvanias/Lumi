@@ -21,7 +21,7 @@ No BVH:
 Current render time: 5.52864 seconds, Average render time: 5.50982 seconds, Number of runs: 100
 
 RANDOM SCATTERING SAMPLING:
-
+156.8 seconds, average render time of 6.27 seconds, number of runs: 25
 
 COMBINED PDF IMPORTANCE SAMPLING:
 78.7 seconds, average render time of 3.14 seconds, number of runs: 25
