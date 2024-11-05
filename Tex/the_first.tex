@@ -663,10 +663,6 @@ We can then assume $\sigma_i^2 \approx \frac{\sigma^2}{16}$ based on the reasona
     = \frac{15}{256}\sigma^2 \approx 0.0586\sigma^2
 \]
 
-
-
-
-
 Comparing the results:
 \begin{enumerate}
     \item[] Simple Random Sampling Variance: $0.0625\sigma^2$
@@ -698,11 +694,23 @@ Figure \ref{fig:strat_comparison} provides a visual comparison between random sa
 
 The benefits of stratified sampling are most pronounced in areas with high frequency details or sharp transitions, such as the edges of objects. This may be hard to see with such a simple scene, but if you look in the very center of the image you should notice that you can see that the stratified sampling approach (Figure \ref{fig:stratified_sampling}) produces more defined edges for the boxes against the background compared to the random sampling method (Figure \ref{fig:randomsamplesno_strat}). This improved edge definition is a result of the more uniform distribution of samples across each pixel, which better captures the transition between object boundaries and their surroundings.
 
-\subsection{Monte Carlo Integration and Variance Reduction}
+\subsection{Importance Sampling}
 
-\subsubsection{The Problem of Noise and Slow Convergence}
+\paragraph{The Problem of Noise and Slow Convergence} The current theory mentioned allows for an elegant pathtracer which is capable of producing visually realistic images, however it has some very fundamental problems. To illustrate these let's look at our cornell box scene with one ray fired per pixel (so no SSAA), and a maximum bounce of 1000 (much higher than 99% of rays will get to).
 
-In our current implementation, the rendered image exhibits significant noise, and convergence to a clear image is slow. This issue stems from the nature of our path tracing algorithm, where most rays bounce into areas of low illumination or darkness. Mathematically, we can express the radiance \( L \) at a point \( p \) in direction \( \omega \) as:
+NEW IMAGE HERE
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/aliasing/aliased.png}
+    \caption{One Sample Cornell box}
+    \label{fig:onesampcornell}
+\end{figure}
+
+
+In our current implementation, the rendered image exhibits significant noise, and convergence to a clear image is slow. Fundamentally, this stems from our path tracing algorithm, in which we bounce rays randomly throughout a scene.
+
+
+Most rays bounce into areas of low illumination or darkness. Mathematically, we can express the radiance \( L \) at a point \( p \) in direction \( \omega \) as:
 
 \[
     L(p, \omega) = \int_{\Omega} fr(p, \omega' \to \omega) L_i(p, \omega') (\omega' \cdot n) \, d\omega'
@@ -810,25 +818,6 @@ This significant improvement in image quality and convergence rate demonstrates 
 
 
 
-
-DIVIIIIIIIIIIIIIIIIIIIIIIIIDER
-
-\subsection{Importance Sampling}
-Advanced sampling techniques enhance efficiency and image quality.
-reference 3.3
-\subsection{Integration for Lighting Models}
-HERES WHAT MONTE CARLO MEANS AND WHY WE USE IT
-Using random sampling to approximate integrals in light transport.
-
-
-\subsubsection{Radiance and Light Transport Equations}
-Mathematical models for light behavior in rendering.
-
-\subsubsection{Numerical Integration Techniques}
-Applying numerical methods to solve lighting equations.
-
-\subsubsection{Technical Implementation}
-Implementing global illumination and integrating direct and indirect lighting.
 
 \section{Technical Description of the System}
 \label{sec:system-description}
