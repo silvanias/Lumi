@@ -9,6 +9,8 @@
 \usepackage{xcolor}
 \usepackage{listings}
 \usepackage{minted}
+\usepackage{subcaption}
+
 
 \hypersetup{
     colorlinks=true,
@@ -808,44 +810,57 @@ Implementing these techniques yields significant improvements in both image qual
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[t]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/25_samp/randomPDF.png}
         \caption{Naive path tracing}
         \label{fig:naive_sampling}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[t]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/25_samp/combPDF.png}
         \caption{Multiple Importance Sampling}
         \label{fig:mis_sampling}
     \end{subfigure}
-    \caption{Comparison of naive path tracing vs. Multiple Importance Sampling (Both 25 samples per pixel)}
+    \hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/25_samp/comparison.png}
+        \caption{Pixels changed in color in red (fuzz of 10\%)}
+        \label{fig:comparison}
+    \end{subfigure}
+    \caption{Comparison of naive path tracing vs.\ Multiple Importance Sampling (Both 25 samples per pixel)}
     \label{fig:sampling_comparison}
 \end{figure}
 
 In Figure \ref{fig:sampling_comparison}, we can observe that the MIS approach (Figure \ref{fig:mis_sampling}) produces a cleaner image with less noise, particularly in areas of indirect illumination and near light sources. The naive approach (Figure \ref{fig:naive_sampling}) struggles with high-variance estimates in these regions, resulting in a noisier image.
 
-Quantitatively, we can measure the improvement using the Mean Squared Error (MSE) between our rendered image and a reference solution:
+Quantitatively, we can measure the difference between the two images using the Peak Signal-to-Noise Ratio (PSNR), a standard metric for assessing image quality differences:
 
+PSNR is most easily defined via the mean squared error (MSE). Given a noise-free m×n monochrome image I and its noisy approximation K, MSE is defined as
 \[
-    \text{MSE} = \frac{1}{mn} \sum_{i=1}^m \sum_{j=1}^n (X_{ij} - Y_{ij})^2
+    {\displaystyle {\mathit {MSE}}={\frac {1}{m\,n}}\sum _{i=0}^{m-1}\sum _{j=0}^{n-1}[I(i,j)-K(i,j)]^{2}.}
 \]
+The PSNR (in dB) is defined as
+\[
+    \begin{array}{c} {\displaystyle {\begin{aligned}{\mathit {PSNR}}&=10\cdot \log _{10}\left({\frac {{\mathit {MAX}}_{I}^{2}}{\mathit {MSE}}}\right)\\&=20\cdot \log _{10}\left({\frac {{\mathit {MAX}}_{I}}{\sqrt {\mathit {MSE}}}}\right)\\&=20\cdot \log _{10}({\mathit {MAX}}_{I})-10\cdot \log _{10}({\mathit {MSE}}).\end{aligned}}} \end{array}
+\]
+Here, MAXI is the maximum possible pixel value of the image. When the pixels are represented using 8 bits per sample, this is 255. More generally, when samples are represented using linear PCM with $B$ bits per sample, $MAX_I$ is $2^B - 1$.
 
-where \( X \) is our rendered image, \( Y \) is the reference solution, and \( m \) and \( n \) are the image dimensions. In our experiments, the MIS approach typically achieves a 50-70% reduction in MSE compared to naive path tracing for the same number of samples.
+PSNR values for image comparisons typically range from 20 to 40 dB, with a PSNR of 30-40 dB being considered acceptable for high-quality images. The PSNR value we obtained is 16.9 dB, which reflects a \textit{substantial} discrepancy between the MIS approach and the naive approach.
 
+The time required to render each frame is also an extremely important metric to look at. The times recorded were as follows:
+\begin{enumerate}
+    \item Random Scattering Sampling:
+          156.8 seconds to render the image with an average frame render time of 6.27 seconds.
 
-IN CONCLUSION BIG NUMBER IT IS THIS MUCH BETTER IN IMAGE QUALITY AND THIS MUCH QUICKER
+    \item Combined PDF Importance Sampling:
+          78.7 seconds to render the image with an average frame render time of 3.14 seconds.
+\end{enumerate}
 
-
-SHOULD BE STRESSED THEY WILL EVENTUALLY ARRIVE AT THE SAME IMAGE, END GOAL IS FUNDAMENTALLY THE SAME. ITS JUST FASTER NOW.
-
-RANDOM SCATTERING SAMPLING:
-156.8 seconds, average render time of 6.27 seconds, number of runs: 25
-
-COMBINED PDF IMPORTANCE SAMPLING:
-78.7 seconds, average render time of 3.14 seconds, number of runs: 25
+These findings highlight that the Combined PDF Importance Sampling method is not only significantly quicker—reducing rendering time by approximately 50%—but also offers HUGE improvements in image quality.
+It should be stressed here that \textit{both methods ultimately producing the same image}, it is just that our importance sampling achieves this outcome MUCH faster.
 
 This significant improvement in image quality and convergence rate demonstrates the power of advanced Monte Carlo techniques in path tracing. By carefully considering the underlying probability distributions and combining multiple sampling strategies, we can create more efficient and accurate rendering algorithms.
 
