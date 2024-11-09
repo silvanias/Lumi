@@ -4,12 +4,12 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \usepackage{cite}
-\usepackage{hyperref}
 \usepackage{float}
-\usepackage{xcolor}
 \usepackage{listings}
 \usepackage{minted}
-\usepackage{subcaption}
+\usepackage{comment}
+\usepackage{xcolor}
+\usepackage{hyperref} % Load hyperref last
 
 
 \hypersetup{
@@ -602,7 +602,7 @@ Performance analysis of BVH algorithms for various scene complexities.
 This section focuses on enhancing the efficiency and quality of our path tracer through the application of advanced probabilistic techniques. While we won't be introducing new visual elements, these methods will significantly improve the performance and convergence rate of our ray tracer.
 
 \subsection{Improved Random Sampling}
-In our previous implementation of Super Sampling Anti-Aliasing (SSAA), we employed a simple random ray generation strategy for each pixel. This approach is very effective, however it suffers from high variance, leading to slower convergence and potentially noisy results. To address this limitation, I will introduce stratified sampling, a technique that offers faster convergence due to its mathematical properties in reducing variance.
+In our previous implementation of Super Sampling Anti-Aliasing (SSAA), we employed a simple random ray generation strategy for each pixel. This approach is very effective, however it suffers from high variance, leading to slower convergence and potentially noisy results. To address this limitation, I will introduce stratified sampling.
 
 Stratified sampling involves dividing the sampling domain into non-overlapping regions, or strata, and then sampling from within each stratum. It can help to imagine placing an 2x2 square over each pixel, and then ensuring that you sample from each of the four quadrants. If we compare this to random sampling 4 times it makes intuitive sense that we would get a larger amount of information (on average).
 The stratified approach ensures a more uniform distribution of samples across the pixel, which can be expressed mathematically as follows:
@@ -633,13 +633,12 @@ This formula is derived by examining the variance over the entire domain and adj
 \begin{enumerate}
     \item Total Variance $\sigma^2$: This represents the overall variability of the function across the entire domain, without any stratification. It is the "baseline" amount of variance we would have if we didn’t use stratified sampling.
 
-    \item Reducing Variance with Strata: When we divide the domain into $k$ strata, each one is designed to be more homogeneous (consistent in value) than the domain as a whole. As a result, the variance within each stratum, $\sigma_i^2$, is expected to be smaller than the total variance $\sigma^2$. The term $\frac{1}{k} \sum_{i=1}^k \sigma_i^2$ represents the average of these reduced variances across all $k$ strata.
+    \item Reducing Variance with Strata: When we divide the domain into $k$ strata, each one is designed to be more homogeneous than the domain as a whole. As a result, the variance within each stratum, $\sigma_i^2$, is expected to be smaller than the total variance $\sigma^2$. The term $\frac{1}{k} \sum_{i=1}^k \sigma_i^2$ represents the average of these reduced variances across all $k$ strata.
 
     \item Variance Reduction Effect: The formula subtracts $\frac{1}{k} \sum_{i=1}^k \sigma_i^2$ from $\sigma^2$ because the stratified approach lowers the overall variance by the average of these within-strata variances. So, we’re essentially saying, “start with the total variance, but then subtract out the portion that stratification has reduced.”
 
-    \item Normalization by Total Samples $n$: Finally, we divide by $n$ because the variance of the mean over $n$ samples scales down as more samples are taken, in line with the central limit theorem.
+    \item Normalization by Total Samples $n$: Finally, we divide by $n$ because the variance of the mean over $n$ samples scales down as more samples are taken \footnote{The central limit theorem states that the distribution of sample means tends to approximate a normal distribution as the sample size $n$ increases, regardless of the distribution of the original data. Additionally, the variability (or variance) of the sample mean decreases with more samples, by a factor of $\frac{1}{n}$. This is why dividing by $n$ is necessary; as $n$ grows, the variance of our mean estimate $\hat{f}$ decreases, leading to a smoother, more accurate result.}.
 
-          The central limit theorem states that the distribution of sample means tends to approximate a normal distribution as the sample size $n$ increases, regardless of the distribution of the original data. Additionally, the variability (or variance) of the sample mean decreases with more samples, by a factor of $\frac{1}{n}$. This is why dividing by $n$ is necessary; as $n$ grows, the variance of our mean estimate $\hat{f}$ decreases, leading to a smoother, more accurate result.
 
 \end{enumerate}
 
@@ -657,7 +656,6 @@ Stratified Sampling Variance: Assuming the variance within each stratum is equal
 \]
 
 We can then assume $\sigma_i^2 \approx \frac{\sigma^2}{16}$ based on the reasonable approximation that each stratum's variance is proportional to the size of the stratum relative to the whole.
-
 \[
     \text{Var}(\hat{f}_s)
     = \frac{1}{16} \left( \sigma^2 - \frac{1}{16} \cdot 16 \cdot \frac{\sigma^2}{16} \right)
@@ -671,7 +669,8 @@ Comparing the results:
     \item[] Stratified Sampling Variance: $0.0586\sigma^2$
 \end{enumerate}
 
-We can see that even in this simplified model, stratified sampling reduces the variance compared to simple random sampling. Unfortunately with more and more samples, the benefits we get decrease due to the central limit theorem.
+We can see that even in this simplified model, stratified sampling reduces the variance compared to simple random sampling. Unfortunately we cannot declare that we should now have one million strata for the best results as the benefits plateau with increasing strata. The variance reduction depends on how much the function varies within each stratum. When there are too many strata, each stratum becomes tiny, capturing little additional information about the function's overall behavior. Consequently, the average variance within each stratum, $\sigma_i^2$, approaches zero, which makes the formula $\text{Var}(\hat{f}_s) = \frac{1}{n} \left( \sigma^2 - \frac{1}{k} \sum_{i=1}^k \sigma_i^2 \right)$ asymptotically approach $\frac{\sigma^2}{n}$, essentially the same as simple random sampling.
+
 
 Figure \ref{fig:strat_comparison} provides a visual comparison between random sampling and stratified sampling, both using 64 rays per pixel.
 
@@ -698,7 +697,7 @@ The benefits of stratified sampling are most pronounced in areas with high frequ
 
 \subsection{Importance Sampling}
 
-\paragraph{The Problem of Noise and Slow Convergence} The current theory mentioned allows for an elegant pathtracer which is capable of producing visually realistic images, however it has some very fundamental problems. To illustrate these let's look at our cornell box scene with one ray fired per pixel (so no SSAA), and a maximum bounce of 1000 (much higher than 99% of rays will get to).
+\paragraph{The Problem of Noise and Slow Convergence} The current theory mentioned allows for an elegant pathtracer which is capable of producing visually realistic images, however it has some very fundamental problems. To illustrate these let's look at our cornell box scene with one ray fired per pixel (so no SSAA), and a maximum bounce of 1000 (much higher than 99\% of rays will get to).
 
 \begin{figure}[H]
     \centering
@@ -709,18 +708,9 @@ The benefits of stratified sampling are most pronounced in areas with high frequ
 
 As we can see most rays bounce around, never hit a light and then bounce back out of the box into the darkness. Because of this the vast majority of our rays contribute no color to our scene.
 
-TODO: WHERE CAN I FIT IN THE RENDERING EQUATION IDK.
-Mathematically, we can express the radiance \( L \) at a point \( p \) in direction \( \omega \) as:
-
-\[
-    L(p, \omega) = \int_{\Omega} fr(p, \omega' \to \omega) L_i(p, \omega') (\omega' \cdot n) \, d\omega'
-\]
-
-where \( fr \) is the BRDF, \( L_i \) is the incoming radiance, \( \Omega \) is the hemisphere of directions, and \( n \) is the surface normal. The problem arises because many of the sampled directions \( \omega' \) contribute little to no light, resulting in a high-variance estimator.
-
 \paragraph{Biasing Rays Towards Light Sources}
 
-To address this issue, we can bias our ray sampling towards light sources. Naive approach is to SIMPLE PICK A RANDOM POINT ON THE LIGHT AND SEND IT TOWARDS IT. will look like this:
+To address this issue, we can bias our ray sampling towards light sources. A Naive approach is to fire our rays into the scene, and then on a intersection, check if the light is visible and send the ray to a random point on the light. This yields something look like this:
 
 \begin{figure}[H]
     \centering
@@ -729,72 +719,109 @@ To address this issue, we can bias our ray sampling towards light sources. Naive
     \label{fig:onesampimportancenopdf}
 \end{figure}
 
-CLEAR NOW THAT WE HAVE THE OPPOSITE PROBlEM! Maively biasing all rays towards light sources introduces a new problem: the rendered image becomes excessively bright. This occurs because we're now oversampling the light sources without properly accounting for this bias in our estimator.
+It is clear now that we have accrued the exact opposite problem! Biasing all rays towards light sources introduces a new problem: the rendered image becomes excessively bright. This occurs because we're now oversampling the light sources without properly accounting for this bias in our estimator. Interestingly we have a much clearer idea of the scene from this technique, which indicates we are on the right track.
 
 \subsubsection{Correcting Bias}
 
-To correct this bias while maintaining the benefits of importance sampling, we need to create a proper probability density function (PDF) that makes the contributions proportional. This PDF should be proportional to the integrand:
+In our ideal world we would be able to do the exact same thing we just did, but for all the rays that go directly to the light, we turn the contribution to the final image down, and for each ray that has not directly hit a light (quite unlikely) we turn their contribution way up.
 
-\[
-    p(\omega) \propto fr(p, \omega' \to \omega) L_i(p, \omega') (\omega' \cdot n)
-\]
+We need two mathematical tools for this:
+\begin{enumerate}
+    \item A method of generating a biased random direction (so that we can sample towards our light)
+    \item A method that, when given a biased random direction, tells us how likely it was to be generated (so that we can turn down/up its intensity by how much it'll be sampled)
+\end{enumerate}
 
-By using this PDF, we ensure that our estimator remains unbiased while reducing variance. The resulting estimator becomes:
+We already have the former, just pick a random point on the light and send a ray in that direction. But we need to utilise a Probability Density Function for the latter.
+In statistics we can utilise the concept of a Probability Density Function (PDF). A PDF, denoted as $p(\omega)$, describes the likelihood of sampling a particular direction $\omega$. For our light-biased sampling strategy, the PDF will have higher values for directions towards the light and lower values elsewhere.
 
-\[
-    L(p, \omega) \approx \frac{1}{N} \sum_{i=1}^N \frac{fr(p, \omega_i' \to \omega) L_i(p, \omega_i') (\omega_i' \cdot n)}{p(\omega_i')}
-\]
+\paragraph{Deriving our Light's PDF}
 
-where \( p(\omega_i') \) is now our carefully constructed PDF.
-
-To implement this, we need to adjust our probability distribution function (PDF) to favor these important directions. Using the example of directly sampling the light, the PDF can be adjusted as follows:
-
-\[
-    p(\omega) = \frac{\operatorname{distance}^2(p,q)}{\cos(\theta) \cdot A}
-\]
-
-where \( A \) is the area of the light source, \( \theta \) is the angle between the surface normal and the direction \( \omega \), and \(\operatorname{distance}(p,q)\) is the distance from point \( p \) to a point \( q \) on the light source.
-
-We modify our sampling strategy to preferentially choose directions \( \omega' \) that are more likely to hit light sources. The new estimator becomes:
-
-\[
-    L(p, \omega) \approx \frac{1}{N} \sum_{i=1}^N \frac{fr(p, \omega_i' \to \omega) L_i(p, \omega_i') (\omega_i' \cdot n)}{p(\omega_i')}
-\]
-
-where \( p(\omega_i') \) is the probability density function (PDF) for sampling direction \( \omega_i' \). This approach can significantly reduce variance by concentrating samples in important regions of the integrand.
+To understand how we arrive at the PDF for our light source, let's consider the geometry of the situation. Imagine we have a point on a surface in our scene, and we want to sample the light source from this point. The light source, in this case, is a quad (a rectangular area light) on the ceiling of our Cornell box.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/one_samp/towards_light_pdf.png}
-    \caption{Importance Sampled Cornell Box}
-    \label{fig:importancesampled}
+    \includegraphics[width=0.7\textwidth]{images/quad_projection.png}
+    \caption{Projection of quad light onto unit hemisphere from  \cite{quadonsphereprojection} }
+    \label{fig:quadprojection}
 \end{figure}
 
-As illustrated in Figure \ref{fig:importancesampled}, importance sampling exhibits a more balanced and accurate distribution of light contributions, reducing noise and enhancing the image quality with fewer samples.
+As illustrated in Figure \ref{fig:quadprojection}, the light source projects onto a portion of the unit hemisphere centered at our surface point (e.g. the top of one of the boxes). Our goal is to derive a PDF that correctly represents the probability of sampling any direction within this projected area.
+
+
+First, consider a subsection area $dA$ on the light source. If we sample uniformly on the light, the probability of hitting this area is simply $\frac{dA}{A}$, where $A$ is the total area of the light.
+
+Now, we need to relate this area on the light to the solid angle $d\omega$ it subtends at our surface point. The relationship between $dA$ and $d\omega$ is given by:
+
+$$d\omega = \frac{dA \cdot \cos\theta}{r^2}$$
+
+Where $r$ is the distance from the surface point to the sampled point on the light, and $\theta$ is the angle between the light's normal and the direction to the surface point.
+
+The probability of sampling a direction within $d\omega$ should be equal to the probability of sampling the corresponding area $dA$ on the light. We can express this as:
+
+$$p(\omega) \cdot d\omega = \frac{dA}{A}$$
+
+Substituting our expression for $d\omega$:
+
+$$p(\omega) \cdot \frac{dA \cdot \cos\theta}{r^2} = \frac{dA}{A}$$
+
+Solving for $p(\omega)$:
+
+$$p(\omega) = \frac{r^2}{|\cos\theta| \cdot A}$$
+
+
+This derivation gives us our final PDF for sampling the light source:
+
+$$p(\omega) = \frac{r^2}{|\cos\theta| \cdot A}$$
+
+It accounts for the distance to the light, making distant parts less likely to be sampled, which aligns with the fact that a given solid angle corresponds to a larger area on a distant surface. It also considers the light's orientation, reducing the probability of sampling grazing angles, which project to smaller solid angles from the surface's perspective. Finally, it normalizes by the light's total area, ensuring that larger lights have proportionally larger sampling probabilities.
+
+\paragraph{Applying the PDF in Our Path Tracer}
+
+Now that we have derived our PDF, we can use it to correct the bias introduced by our light-sampling strategy. When we generate a sample direction towards the light, we compute the PDF value for that direction using the formula above. We then use this PDF value to divide the contribution of the sample.
+
+By dividing by the PDF, we're effectively "turning down" the contribution of samples that were more likely to be generated (those towards the light) and "turning up" the contribution of samples that were less likely. This correction ensures that our estimator remains unbiased, despite our biased sampling strategy:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/importance_sampled.png}
+    \caption{Importance Sampled Cornell Box (300 samples)}
+    \label{fig:importancesampled}
+\end{figure}
+As illustrated in Figure \ref{fig:importancesampled}, with our PDF working in conjunction with importance sampling we have exhibited a much better distribution of light contributions, reducing noise and enhancing the image quality with FAR fewer samples.
 
 \subsubsection{Combining Multiple Importance Sampling}
 
-Now that we have a method of getting a picture of our scene very quickly we also want to retain our beautiful scattered bouncing, which captures much more complex lighting interactions. There are many ways to do this, but I will demonstrate a very simple one.
+So great, we have a method of getting a picture of our scene very quickly. Unfortunately, in this process we have also lost our beautiful scattered bouncing, which approximates realistic lighting interactions closely.
 
-If we represent our previous scattered sampling also as a PDF, we can easily combine the both of them:
+The easiest way to get this back is to convert our previous surface scattering into a PDF, this is because of the awesome thing about PDFs which is that you can just use linear mixtures of them to form mixture densities, which themselves are also PDFs! As long as the probability weights all add up to one. If we combined the light sampling PDF with our hemispherical scattering PDF we would get the best of both worlds, a very quick image, which also converges to a very pretty image over time.
 
-MATHS HERE
+This leads us to the question of how we can represent our Lambertian reflection as a PDF.
 
-And then have a very quick image, which also converges to a very pretty image over time.
+\paragraph{Lambertian Reflection as a PDF}
 
-In practice, we often have multiple strategies for importance sampling, such as sampling based on the BRDF and sampling based on light source directions. We can combine these strategies using Multiple Importance Sampling (MIS). The balance heuristic is a common method for MIS, where we compute the final estimate as:
+For Lambertian surfaces, we use a cosine-weighted Probability Density Function (PDF) to represent the scattering distribution. This aligns with Lambert's cosine law, which states that the amount of light reflected in a particular direction is proportional to the cosine of the angle between that direction and the surface normal.
 
-\[
-    L(p, \omega) \approx \sum_{s=1}^S \frac{1}{N_s} \sum_{i=1}^{N_s} \frac{w_s(\omega_i') fr(p, \omega_i' \to \omega) L_i(p, \omega_i') (\omega_i' \cdot n)}{p_s(\omega_i')}
-\]
+The PDF for a Lambertian surface is given by:
 
-where \( S \) is the number of sampling strategies, \( N_s \) is the number of samples for strategy \( s \), and \( w_s \) is the weight for strategy \( s \) given by:
+$$p_{cosine}(\omega) = \frac{\max(0, \cos\theta)}{\pi}$$
 
-\[
-    w_s(\omega') = \frac{N_s p_s(\omega')}{\sum_{j=1}^S N_j p_j(\omega')}
-\]
+Where:
+$\omega$ is the direction of scattered light
+$\theta$ is the angle between $\omega$ and the surface normal
+$\pi$ is used for normalization
 
-Combining the two PDFs results in this image:
+It's normalized over the hemisphere, integrating to 1 over all possible directions.
+It gives higher probability to directions closer to the surface normal, which aligns with the behavior of diffuse surfaces.
+It's rotationally symmetric around the surface normal.
+
+
+To implement multiple importance sampling, we can combine this cosine PDF with our previously derived light sampling PDF. A simple approach is to use a weighted sum:
+
+$$p{combined}(\omega) = w{light} \cdot p{light}(\omega) + w{cosine} \cdot p_{cosine}(\omega)$$
+
+Where $w{light}$ and $w{cosine}$ are weights that sum to 1. For example, we might choose $w{light} = w{cosine} = 0.5$ to give equal importance to both strategies.
+
+The combined PDF allows us to sample rays in a way that balances direct light sampling with the more general Lambertian scattering, resulting in this image:
 
 \begin{figure}[H]
     \centering
@@ -803,10 +830,25 @@ Combining the two PDFs results in this image:
     \label{fig:combinedPDFimportancesampled}
 \end{figure}
 
+As you can see we have now arrived back at our original image before looking into importance sampling.
 
-\subsubsection{Results and Analysis}
+\subsection{Analysis of Results}
 
-Implementing these techniques yields significant improvements in both image quality and convergence rate. I'll take this section to demonstrate how crazy of an improvement it is.
+This does raise the point of why we bothered to go through all the maths, and so I will take this section to quantitatively demonstrate how much of a speed advantage we have just gained.
+
+\paragraph{PSNR} The first metric I will use to do this is the Peak Signal-to-Noise Ratio (PSNR) which is a standard metric for assessing image quality differences. PSNR is most easily defined via the mean squared error (MSE). Given a noise-free m×n monochrome image I and its noisy approximation K, MSE is defined as:
+\[
+    {\displaystyle {\mathit {MSE}}={\frac {1}{m\,n}}\sum _{i=0}^{m-1}\sum _{j=0}^{n-1}[I(i,j)-K(i,j)]^{2}.}
+\]
+The PSNR (in dB) is defined as:
+\[
+    \begin{array}{c} {\displaystyle {\begin{aligned}{\mathit {PSNR}}&=10\cdot \log _{10}\left({\frac {{\mathit {MAX}}_{I}^{2}}{\mathit {MSE}}}\right).\end{aligned}}} \end{array}
+\]
+Here, $MAX_I$ is the maximum possible pixel value of the image. When the pixels are represented using 8 bits per sample, this is 255. The advantage of using PSNR over MSE is that it is typically more aligned with human perception, as small differences in high dynamic range signals will have a lesser impact on the result. In compariosn MSE treats all errors equally, without accounting for perceptual differences.
+
+
+Shown below you can observe the visual difference between the two sampling techniques we covered, with the final image showcasing the pixels that have changed color (shown in red).
+
 
 \begin{figure}[H]
     \centering
@@ -827,7 +869,7 @@ Implementing these techniques yields significant improvements in both image qual
     \begin{subfigure}[t]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/25_samp/comparison.png}
-        \caption{Pixels changed in color in red (fuzz of 10\%)}
+        \caption{Pixels changed (fuzz of 10\%)}
         \label{fig:comparison}
     \end{subfigure}
     \caption{Comparison of naive path tracing vs.\ Multiple Importance Sampling (Both 25 samples per pixel)}
@@ -836,21 +878,10 @@ Implementing these techniques yields significant improvements in both image qual
 
 In Figure \ref{fig:sampling_comparison}, we can observe that the MIS approach (Figure \ref{fig:mis_sampling}) produces a cleaner image with less noise, particularly in areas of indirect illumination and near light sources. The naive approach (Figure \ref{fig:naive_sampling}) struggles with high-variance estimates in these regions, resulting in a noisier image.
 
-Quantitatively, we can measure the difference between the two images using the Peak Signal-to-Noise Ratio (PSNR), a standard metric for assessing image quality differences:
+If we take the PSNR value between the two of these image we get 16.9 dB. PSNR values for image comparisons typically range from 20 to 40 dB, with a PSNR of 30-40 dB being considered acceptable for high-quality images. This means our value of 16.9 dB reflects a \textit{substantial} discrepancy between the MIS approach and the naive approach.
 
-PSNR is most easily defined via the mean squared error (MSE). Given a noise-free m×n monochrome image I and its noisy approximation K, MSE is defined as
-\[
-    {\displaystyle {\mathit {MSE}}={\frac {1}{m\,n}}\sum _{i=0}^{m-1}\sum _{j=0}^{n-1}[I(i,j)-K(i,j)]^{2}.}
-\]
-The PSNR (in dB) is defined as
-\[
-    \begin{array}{c} {\displaystyle {\begin{aligned}{\mathit {PSNR}}&=10\cdot \log _{10}\left({\frac {{\mathit {MAX}}_{I}^{2}}{\mathit {MSE}}}\right)\\&=20\cdot \log _{10}\left({\frac {{\mathit {MAX}}_{I}}{\sqrt {\mathit {MSE}}}}\right)\\&=20\cdot \log _{10}({\mathit {MAX}}_{I})-10\cdot \log _{10}({\mathit {MSE}}).\end{aligned}}} \end{array}
-\]
-Here, MAXI is the maximum possible pixel value of the image. When the pixels are represented using 8 bits per sample, this is 255. More generally, when samples are represented using linear PCM with $B$ bits per sample, $MAX_I$ is $2^B - 1$.
 
-PSNR values for image comparisons typically range from 20 to 40 dB, with a PSNR of 30-40 dB being considered acceptable for high-quality images. The PSNR value we obtained is 16.9 dB, which reflects a \textit{substantial} discrepancy between the MIS approach and the naive approach.
-
-The time required to render each frame is also an extremely important metric to look at. The times recorded were as follows:
+\paragraph{Render time} Next I will look at the time required to render each frame (an obviously crucial metric). The times recorded were as follows:
 \begin{enumerate}
     \item Random Scattering Sampling:
           156.8 seconds to render the image with an average frame render time of 6.27 seconds.
@@ -859,10 +890,10 @@ The time required to render each frame is also an extremely important metric to 
           78.7 seconds to render the image with an average frame render time of 3.14 seconds.
 \end{enumerate}
 
-These findings highlight that the Combined PDF Importance Sampling method is not only significantly quicker—reducing rendering time by approximately 50%—but also offers HUGE improvements in image quality.
-It should be stressed here that \textit{both methods ultimately producing the same image}, it is just that our importance sampling achieves this outcome MUCH faster.
+Thus we can conclude that by implementing importance sampling we have decreased the speed to render a frame of our image by approximately 50\%!.
 
-This significant improvement in image quality and convergence rate demonstrates the power of advanced Monte Carlo techniques in path tracing. By carefully considering the underlying probability distributions and combining multiple sampling strategies, we can create more efficient and accurate rendering algorithms.
+These two metrics demonstrate that the Combined PDF Importance Sampling method is not only significantly quicker but also offers huge improvements in image quality.
+It should be stressed here that \textit{both methods ultimately produce the same final image}, it is just that our importance sampling achieves this outcome MUCH faster.
 
 \section{Technical Description of the System}
 \label{sec:system-description}
