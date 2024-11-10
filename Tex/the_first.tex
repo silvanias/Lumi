@@ -27,7 +27,7 @@
 
 \maketitle
 \begin{abstract}
-    This report presents an expository on the foundational mathematical knowledge and implementation of a path tracing renderer using Monte Carlo methods to simulate realistic lighting in a 3D scene. Various sampling techniques and variance reduction methods are explored to enhance image quality and convergence speed. Experimental results demonstrate the effectiveness of these techniques in reducing noise and improving rendering efficiency.
+    This report presents an expository on the foundational mathematical knowledge and implementation of a path tracing renderer using Monte Carlo methods to simulate realistic lighting in a 3D scene. Various sampling and variance reduction methods are explored to enhance image quality and convergence speed. Experimental results demonstrate the effectiveness of these techniques in reducing noise and improving rendering efficiency.
 \end{abstract}
 
 \tableofcontents
@@ -39,7 +39,7 @@
 
 This expository aims to achieve the following objectives:
 \begin{enumerate}
-    \item To provide a comprehensive analysis of the \textit{mathematical} foundations underlying path tracing, creating a scene, and Monte Carlo integration techniques.
+    \item To comprehensively analyse of the \textit{mathematical} foundations underlying path tracing, creating a scene, and Monte Carlo integration techniques.
 
     \item To demonstrate the \textit{visual} impact of Monte Carlo methods in path tracing for realistic light simulation, exploring their impact on image fidelity, convergence rates, and rendering efficiency.
 
@@ -49,35 +49,35 @@ This expository aims to achieve the following objectives:
 Through these objectives, this document seeks to offer a thorough exploration of path tracing, from its mathematical underpinnings to its practical realization in computer graphics, serving as a valuable resource for researchers and practitioners in the field of physically-based rendering.
 
 \subsubsection{Overview of the Methodological Approach}
-This expository adopts a progressive approach to the principles and implementation of path tracing.
-We begin by examining the foundational elements of a generic path tracer, including ray representation, intersection testing, and basic shading models. For each of these components, we present the underlying mathematical principles, followed by their corresponding code implementations. This foundational phase establishes the core concepts upon which more advanced techniques are built.
+This expository adopts a progressive approach to path-tracing principles and implementation.
+We begin by examining the foundational elements of a generic path tracer, including ray representation, intersection testing, and basic shading models. We present the underlying mathematical principles for each of these components, followed by their corresponding representations. This foundational phase establishes the core concepts upon which more advanced techniques are built.
 
-Building upon these foundational elements, we then abstract the entire lighting simulation process into a comprehensive mathematical framework. This transition allows us to view the path tracing problem as an integration task. We introduce Monte Carlo methods as a powerful tool for numerical integration, exploring how these statistical techniques can be applied to solve the rendering equation efficiently.
+Building upon these foundational elements, we abstract the lighting simulation process into a comprehensive mathematical framework. This transition allows us to view the path-tracing problem as an integration task. We introduce Monte Carlo methods as a powerful tool for numerical integration, exploring how these statistical techniques can be applied to solve the rendering equation efficiently.
 
 As we introduce each component, we demonstrate its effect on the rendered image, allowing for a clear understanding of how theoretical concepts translate to visual outcomes. This iterative approach provides immediate feedback on the impact of each implemented feature, reinforcing the connection between mathematical principles and their applications in computer graphics.
 
 \subsection{Background}
 \subsubsection{Overview of Ray Tracing}
-Ray tracing is a rendering technique that simulates the physical behavior of light to create realistic images. At its core, ray tracing involves tracing the path of light rays as they interact with objects in a virtual scene \cite{Glassner1989}.
-The fundamental concept is to cast rays from a virtual camera through each pixel of an image plane into the scene. These rays interact with objects, potentially reflecting, refracting, or being absorbed, mimicking the behavior of light in the real world. By accurately modeling these interactions, ray tracing can produce highly realistic effects such as shadows, reflections, and refractions.
+Ray tracing is a rendering technique that simulates the physical behaviour of light to create realistic images. At its core, ray tracing involves tracing the path of light rays as they interact with objects in a virtual scene \cite{Glassner1989}.
+The fundamental concept is to cast rays from a virtual camera through each pixel of an image plane into the scene. These rays interact with objects, potentially reflecting, refracting, or being absorbed, mimicking the behaviour of light in the real world. By accurately modelling these interactions, ray tracing can produce highly realistic effects such as shadows, reflections, and refractions.
 
-Path tracing, an advanced form of ray tracing, extends this concept by using Monte Carlo methods to solve the rendering equation \cite{Kajiya1986}. It traces numerous light paths through the scene, accounting for multiple bounces and complex light interactions. This approach allows for the accurate simulation of global illumination effects, including soft shadows, color bleeding, and caustics \cite{Veach1997}.
+Path tracing, an advanced form of ray tracing, extends this concept by using Monte Carlo methods to solve the rendering equation \cite{Kajiya1986}. It traces numerous light paths through the scene, accounting for multiple bounces and complex light interactions. This approach allows for the accurate simulation of global illumination effects, including soft shadows, colour bleeding, and caustics \cite{Veach1997}.
 
-The power of ray tracing and path tracing lies in their ability to naturally handle a wide range of lighting phenomena, producing physically accurate images. However, this accuracy comes at the cost of increased computational complexity, often requiring sophisticated optimization techniques to achieve reasonable rendering times \cite{Pharr2016}.
+The power of ray and path tracing lies in their ability to naturally handle a wide range of lighting phenomena and produce physically accurate images. However, this accuracy comes at the cost of increased computational complexity, often requiring sophisticated optimization techniques to achieve reasonable rendering times \cite{Pharr2016}.
+
 \subsubsection{Importance in Computer Graphics}
-Path tracing has become a cornerstone technique in modern computer graphics, particularly in applications demanding high levels of photorealism. Its ability to accurately simulate complex light interactions makes it invaluable in industries such as film and television visual effects, architectural visualization, product design, and video game development \cite{Keller2015}.
+Path tracing has become a cornerstone technique in modern computer graphics, particularly in applications demanding high levels of photorealism. Its ability to accurately simulate complex light interactions makes it invaluable in film and television visual effects, architectural visualization, product design, and video game development \cite{Keller2015}.
 
-In the film industry, path tracing is used to create photorealistic CGI that seamlessly blends with live-action footage \cite{Christensen2018}. Moreover, with the advent of real-time ray tracing in consumer hardware, path tracing techniques are increasingly being adopted in interactive applications like video games, pushing the boundaries of real-time graphics fidelity \cite{Schied2017}.
+The film industry uses path tracing to create photorealistic CGI that seamlessly blends with live-action footage \cite{Christensen2018}. Moreover, with the advent of real-time ray tracing in consumer hardware, path tracing techniques are increasingly being adopted in interactive applications like video games, pushing the boundaries of real-time graphics fidelity \cite{Schied2017}.
+
 \section{Ray Tracing Fundamentals}
 \label{sec:fundamentals}
+\subsection{A Ray of Light as a Vector}
+In physics, light is an electromagnetic wave that propagates through space. However, in many scenarios, particularly in computer graphics, we can approximate light behaviour using the concept of rays. This simplification, known as geometric optics, is valid when the wavelength of light is much smaller than the objects it interacts with.
 
-\subsection{Rays}
-\subsubsection{A Ray of Light as a Vector}
-In physics, light is an electromagnetic wave that propagates through space. However, in many scenarios, particularly in computer graphics, we can approximate light behavior using the concept of rays. This simplification, known as geometric optics, is valid when the wavelength of light is much smaller than the objects it interacts with.
+We can think of a ray of light as an idealised narrow beam travelling in a straight line. This approximation allows us to model light propagation without dealing with the complexities of wave optics, making it computationally feasible for rendering purposes.
 
-A ray of light can be thought of as an idealized narrow beam of light traveling in a straight line. This approximation allows us to model light propagation without dealing with the complexities of wave optics, making it computationally feasible for rendering purposes.
-
-In mathematics, a vector is a quantity that has both magnitude and direction. It can be represented as an arrow in space, defined by its starting point and its direction. This concept aligns perfectly with our need to represent a ray of light, which has a point of origin and a direction of propagation.
+In mathematics, a vector is a quantity with both magnitude and direction. Vectors can be represented as an arrow in space, defined by its starting point and direction. This concept aligns perfectly with our need to represent a ray of light with a point of origin and a direction of propagation.
 
 Formally, we can define a ray \(\mathbf{R}(t)\) in 3D space using a parametric equation:
 
@@ -96,11 +96,11 @@ This equation describes all points along the ray, starting from the origin and e
 
 \subsection{Intersection Testing}
 
-Having established the mathematical and programmatic representation of a ray of light, we now turn our attention to determining how these rays interact with objects in our scene. Intersection testing is a crucial component of ray tracing, allowing us to simulate the behavior of light as it encounters various surfaces. To perform these tests efficiently, we leverage the geometric properties of vectors.
+Having established the mathematical and programmatic representation of a ray of light, we now turn our attention to determining how these rays interact with objects in our scene. Intersection testing is a crucial component of ray tracing, allowing us to simulate the behaviour of light as it encounters various surfaces. To perform these tests efficiently, we leverage the geometric properties of vectors.
 
 \subsubsection{Mathematical Tools}
 
-Two fundamental vector operations are essential for intersection testing: the dot product and the cross product.
+Two fundamental vector operations are essential for intersection testing: the dot product and the cross-product.
 
 \paragraph{Dot Product}
 The dot product of two vectors \(\mathbf{A}\) and \(\mathbf{B}\) is a scalar quantity defined as:
@@ -115,11 +115,11 @@ This operation has several useful properties for intersection testing:
           \[
               \cos(\theta) = \frac{\mathbf{A} \cdot \mathbf{B}}{\|\mathbf{A}\| \|\mathbf{B}\|}
           \]
-    \item It allows us to determine orthogonality (when the dot product is zero)
-    \item It enables the computation of vector projections
+    \item It allows us to determine orthogonality (when the dot product is zero).
+    \item It enables the computation of vector projections.
 \end{itemize}
 
-In the context of ray tracing, the dot product is particularly useful for determining the angle between a ray and a surface normal, which is crucial for calculating reflection and refraction.
+In ray tracing, the dot product is particularly useful for determining the angle between a ray and a surface normal, which is crucial for calculating reflection and refraction.
 
 \paragraph{Cross Product}
 The cross product of two vectors \(\mathbf{A}\) and \(\mathbf{B}\) results in a third vector \(\mathbf{C}\) that is perpendicular to both:
@@ -133,19 +133,18 @@ The magnitude of the resulting vector is given by:
 \]
 where \(\theta\) is the angle between \(\mathbf{A}\) and \(\mathbf{B}\).
 
-In intersection testing, the cross product serves several important purposes:
+In intersection testing, the cross-product serves several important purposes:
 
 \begin{itemize}
-    \item It can be used to compute surface normals for triangles or polygons
-    \item It helps in determining the orientation of surfaces relative to the ray
-    \item It's useful in calculating barycentric coordinates for triangle intersection tests
-    \item It can be employed to find perpendicular vectors, which is helpful in constructing coordinate systems for shading calculations
+    \item It can be used to compute surface normals for triangles or polygons.
+    \item It helps in determining the orientation of surfaces relative to the ray.
+    \item It is useful in calculating barycentric coordinates for triangle intersection tests.
+    \item It can be employed to find perpendicular vectors, which helps construct coordinate systems for shading calculations.
 \end{itemize}
 
 These mathematical tools form the foundation for implementing various intersection tests. For instance, when testing ray-triangle intersections, we can use the cross product to compute the triangle's normal and the dot product to determine if the ray is facing the correct side of the triangle. Similarly, for ray-plane intersections, the dot product helps us calculate the distance along the ray at which the intersection occurs.
 
-In the following sections, we will explore how these tools are applied to specific geometric primitives, starting with spheres and planes, and then extending to more complex shapes and acceleration structures. By leveraging these vector operations, we can efficiently determine not only if a ray intersects an object, but also the exact point of intersection and the surface properties at that point, which are crucial for accurate light transport simulation in our path tracer.
-
+In the following sections, we will explore how these tools are applied to specific geometric primitives, starting with spheres and planes and extending to more complex shapes and acceleration structures. By leveraging these vector operations, we can efficiently determine if a ray intersects an object, the exact point of intersection, and the surface properties at that point, which are crucial for accurate light transport simulation in our path tracer.
 \subsubsection{Spheres}
 
 A sphere is a common geometric object in ray tracing, defined by its center \(\mathbf{C}\) and radius \(R\). To determine the intersection of a ray with a sphere, we substitute the ray equation \(\mathbf{P}(t) = \mathbf{O} + t\mathbf{D}\) into the sphere's implicit equation:
@@ -190,10 +189,9 @@ The following image illustrates a ray-sphere intersection:
     \label{fig:raysphereintersection}
 \end{figure}
 
-In Figure \ref{fig:raysphereintersection}, we can see a red circle representing a sphere on a white background. Notice the jagged pixelated border. This is because at one ray per pixel, a pixel can only be fully red (intersecting the sphere) or fully white (missing the sphere). We will fix this issue later.
+In Figure \ref{fig:raysphereintersection}, we see a red circle representing a sphere on a white background. Notice the jagged, pixelated border. This border happens because at one ray per pixel, a pixel can only be entirely red (intersecting the sphere) or entirely white (missing the sphere). We will fix this issue later.
 
 \subsubsection{Planes}
-
 A plane is defined by a point \(\mathbf{P}_0\) on the plane and a normal vector \(\mathbf{N}\). To find the intersection of a ray with a plane, we use the plane equation:
 \[
     \mathbf{N} \cdot \left( \mathbf{P}(t) - \mathbf{P}_0 \right) = 0
@@ -220,11 +218,11 @@ The following image illustrates a ray-plane intersection:
     \label{fig:rayplaneintersection}
 \end{figure}
 
-In Figure \ref{fig:rayplaneintersection}, we can see a ray intersecting a plane (represented as a quad for visualization purposes). The image demonstrates how a ray intersects the plane at a single point. This visual representation helps to understand the mathematical concept described above, where we solve for a single value of \(t\) to find the intersection point.
+In Figure \ref{fig:rayplaneintersection}, we see a ray intersecting a plane (represented as a quad for visualization purposes). The image demonstrates how a ray intersects the plane at a single point. This visual representation helps to understand the mathematical concept described above, where we solve for a single value of \(t\) to find the intersection point.
 
 \subsubsection{Extension to Object Meshes}
 
-Intersection tests can be extended to complex object meshes using triangle intersection algorithms. This is a crucial step in ray tracing, as most 3D models are represented as meshes composed of triangles.
+Intersection tests can be extended to complex object meshes using triangle intersection algorithms. Intersecting meshes is a crucial step in ray tracing, as most 3D models are represented as meshes composed of triangles.
 
 \paragraph{Triangle Intersection}
 
@@ -273,41 +271,40 @@ After testing all triangles, return the closest intersection point (smallest pos
 
 \subsection{Placing Objects into the World}
 
-In computer graphics, assembling a scene involves not only defining the objects within it but also positioning them appropriately. Consider the classic demonstration scene known as the \textit{Cornell Box}~\cite{cornellbox}, which is a standard test for rendering algorithms to showcase accurate light transport and shading.
-From the previous sections, we've discussed how to test intersections with various geometric primitives. However, to build a complex scene like the Cornell Box, we need a systematic way to place and manipulate these objects in three-dimensional space.
+In computer graphics, assembling a scene involves defining the objects within it and positioning them appropriately. Consider the classic demonstration scene, the \textit{Cornell Box}~\cite{cornellbox}, a standard test for rendering algorithms to showcase accurate light transport and shading.
+In the previous sections, I have discussed how to test intersections with various geometric primitives. However, building a complex scene like the Cornell Box requires a systematic way to place and manipulate these objects in three-dimensional space. We can do this via Matrices.
 
-Matrices are fundamental tools in linear algebra that we can use to efficiently represent and compute transformations in space. We can represent operations such as:
+Matrices are fundamental tools in linear algebra that we can use to represent and compute transformations in space efficiently. We can represent operations such as:
 
 \begin{itemize}
-    \item \textbf{Translation} moves an object by a certain distance along the axes.
-    \item \textbf{Rotation} turns an object around an axis passing through the origin.
-    \item \textbf{Scaling} resizes an object by stretching or compressing it along the axes.
+    \item \textbf{Translation}, moving an object by a certain distance along the axes.
+    \item \textbf{Rotation}, turning an object around an axis.
+    \item \textbf{Scaling}, resizing an object by stretching or compressing it along an axis.
 \end{itemize}
 
-and put them all into mathematical objects that can be easily combined and applied to points and vectors in 3D space (and computed quickly on a GPU).
+We can then put these operations into mathematical objects that can be easily combined and applied to points and vectors in 3D space (and computed quickly on a GPU).
 
 In our path tracer we can view a point or vector as a column vector (a matrix of N $\times$ 1):
 \[
-    \mathbf{v} = \begin{pmatrix} x \\ y \\ z \end{pmatrix}
+    \mathbf{v} = \begin{bmatrix} x \\ y \\ z \end{bmatrix}
 \]
 Transforming this vector involves multiplying it by a transformation matrix:
 \[
     \mathbf{v}' = \mathbf{M} \mathbf{v}
 \]
 where \(\mathbf{v}'\) is the transformed vector and \(\mathbf{M}\) is the transformation matrix.
-If this transformation matrix is then applied to all points in our object, then we have successfully transformed our object.
+If we apply the transformation matrix to all points in our object, we have successfully transformed our object.
 
 \subsubsection{Translation}
 
-We will start with translation as though it may appear the most simple:
-\( \mathbf{v}' = \mathbf{v} + \mathbf{d} \)
-where \( \mathbf{d} = \begin{bmatrix} dx \\ dy \\ dz \end{bmatrix} \) is the translation vector.
-Unfortunately, this breaks the laws of linearity (see \autoref{sec:appendix-derivations-linear}).
+We will start with translation. In 3D space, we can represent a translation as a vector $\mathbf{d} = (d_x, d_y, d_z)$. Applying this translation to a point $\mathbf{p} = (x, y, z)$ is straightforward:
 
-This is a problem because translation cannot be represented with a 3$\times$3 matrix in 3D space.
+$$ \mathbf{p}' = \mathbf{p} + \mathbf{d} = \begin{bmatrix}
+        x + d_x \\ y + d_y \\ z + d_z
+    \end{bmatrix} $$
 
-
-To unify translation with rotation and scaling in a single matrix operation, we introduce homogeneous coordinates. By adding an extra dimension to our vectors and matrices, we can represent all affine transformations, including translation, with 4$\times$4 matrices.
+However, this addition operation \textit{cannot} be represented as a matrix multiplication with 3D vectors (due to it breaking the laws of linearity, see \autoref{sec:appendix-derivations-linear}). This is problematic as we want to unify all our transformations (translation, rotation, and scaling) into a single matrix operation (this is much more efficient).
+To solve this, we introduce homogeneous coordinates. By adding a fourth component to our vectors (usually set to 1 for points and 0 for directions), we can represent translation as a 4x4 matrix multiplication:
 
 In homogeneous coordinates, a point becomes:
 
@@ -332,9 +329,8 @@ The transformation is then applied via:
     \begin{bmatrix}  1 & 0 & 0 & {T_x} \\ 0 & 1 & 0 & {T_y} \\ 0 & 0 & 1 & {T_z} \\ 0 & 0 & 0 & 1 \end{bmatrix} \cdot \begin{pmatrix} x \\ y \\ z \\ 1 \end{pmatrix} = \begin{pmatrix} x + {T_x} \\ y + {T_y} \\ z + {T_z} \\ 1 \end{pmatrix}
 \]
 
+Adding an extra dimension to our vectors and matrices allows us to represent all affine transformations, including translation, with 4$\times$4 matrices. Though we primarily use 3$\times$3 matrices for rotation and scaling in our renderer, working with homogeneous coordinates and 4$\times$4 matrices becomes essential for incorporating translation and perspective transformations.
 
-
-While we primarily use 3$\times$3 matrices for rotation and scaling in our renderer, working with homogeneous coordinates and 4$\times$4 matrices becomes essential for incorporating translation and perspective transformations, especially in more advanced rendering techniques.
 
 \subsubsection{Scaling}
 
@@ -358,7 +354,6 @@ where \( S_x \), \( S_y \), and \( S_z \) are the scaling factors along the \( x
 Rotation can also be represented using a 3$\times$3 matrix, but again, in practice they are represented as 4$\times$4 matrices.
 Rotations in 3D are specified with an angle (in radians) and a rotation axis, with which you rotate the object around.
 
-
 \paragraph{Rotation Around the X-axis}
 
 Rotating a point around the \(x\)-axis by an angle \(\theta\):
@@ -371,9 +366,7 @@ Rotating a point around the \(x\)-axis by an angle \(\theta\):
     \end{pmatrix}
 \]
 
-
 \paragraph{Rotation Around the Y-axis}
-
 Rotating a point around the \(y\)-axis by an angle \(\theta\):
 \[
     \mathbf{R}_y(\theta) = \begin{pmatrix}
@@ -396,9 +389,43 @@ Rotating a point around the \(z\)-axis by an angle \(\theta\):
     \end{pmatrix}
 \]
 
-POTENTIALLY A SECTION HERE TALKING ABOUT PERFORMANCE AND TRANSFORMING VECTORS INTO MODEL SPACE
+These transformation matrices can be combined into a single matrix through multiplication, allowing us to apply multiple transformations in one operation. The order of multiplication is important, as matrix multiplication is not commutative. Typically, we combine transformations in the order of scale, then rotate, then translate.
 
-With these transformations we can now easily set up the scene like so:
+I will demonstrate with an example, scale an object by 2 in all dimensions, rotate it 45° around the y-axis, and then translate it by (1, 2, 3), we would have:
+
+\[
+    \mathbf{M} =
+    \begin{pmatrix}
+        1 & 0 & 0 & 1 \\
+        0 & 1 & 0 & 2 \\
+        0 & 0 & 1 & 3 \\
+        0 & 0 & 0 & 1
+    \end{pmatrix} \cdot
+    \begin{pmatrix}
+        \cos 45°  & 0 & \sin 45° & 0 \\
+        0         & 1 & 0        & 0 \\
+        -\sin 45° & 0 & \cos 45° & 0 \\
+        0         & 0 & 0        & 1
+    \end{pmatrix} \cdot
+    \begin{pmatrix}
+        2 & 0 & 0 & 0 \\
+        0 & 2 & 0 & 0 \\
+        0 & 0 & 2 & 0 \\
+        0 & 0 & 0 & 1
+    \end{pmatrix}
+\]
+\[
+    \mathbf{M} = \begin{pmatrix}
+        1.41  & 0 & 1.41 & 1 \\
+        0     & 2 & 0    & 2 \\
+        -1.41 & 0 & 1.41 & 3 \\
+        0     & 0 & 0    & 1
+    \end{pmatrix}
+\]
+
+This combined matrix $\mathbf{M}$ can then be applied to all points in our object to achieve the desired transformation in a single step.
+
+With this knowledge we can set up our cornell box scene:
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{images/artsy_rep/no_lighting_cornell.png}
@@ -406,19 +433,45 @@ With these transformations we can now easily set up the scene like so:
     \label{fig:unlitcornell}
 \end{figure}
 
+\subsubsection{Model-View-Projection Matrix}
+I need to mention an essential 3D graphics tool here, which will be useful to know later (\ref{sec:camera}). The Model-View-Projection (MVP) matrix transforms 3D objects from their local coordinate space to 2D screen coordinates. This transformation contains three stages:
+
+\begin{description}
+    \item[Model Matrix] The model matrix is composed of the transformations we've discussed (translation, rotation, and scaling) applied to an object to position it in the world.
+
+    \item[View Matrix] The view matrix represents the camera's position and orientation in the world. It's essentially the inverse of the camera's transformation matrix, moving the world relative to the camera.
+
+    \item[Projection Matrix] The projection matrix defines how 3D points in camera space are projected onto the 2D screen. For a perspective projection, it might look like this:
+          \[
+              P = \begin{pmatrix}
+                  \frac{1}{\tan(\frac{fov}{2}) \cdot aspect} & 0                             & 0                                & 0                                          \\
+                  0                                          & \frac{1}{\tan(\frac{fov}{2})} & 0                                & 0                                          \\
+                  0                                          & 0                             & \frac{-(far + near)}{far - near} & \frac{-2 \cdot far \cdot near}{far - near} \\
+                  0                                          & 0                             & -1                               & 0
+              \end{pmatrix}
+          \]
+          Where $fov$ is the field of view, $aspect$ is the aspect ratio, and $near$ and $far$ define the view frustum.
+
+\end{description}
+
+The MVP matrix is the product of these three matrices:
+$MVP = Projection \cdot View \cdot Model $
+
+We will not use the full MVP matrix in our path tracer. However, we can use the inverse of the view matrix to transform rays from camera space to world space and then intersect these rays with objects in world space. The projection is handled implicitly by generating rays based on the camera's properties.
 
 \subsection{Color and Shading Models}
+\label{color_shading}
 Having established our scene and implemented the ability to compute intersections between rays and objects, we must find some way to use this information to simulate how light works in the real world. This involves modelling how light behaves upon hitting different surfaces.
 
 \paragraph{Light and Material Interaction}
-The appearance of objects in a scene is influenced by how they interact with light. When light strikes a surface, it can be absorbed, reflected, or transmitted. These interactions are governed by the material properties of the surface.
+The appearance of objects in a scene is influenced by how they interact with light. Light can be absorbed, reflected, or transmitted when it strikes a surface. The material properties of the surface govern these interactions.
 
-In the initial implementation~\ref{fig:unlitcornell}, I simplified the shading process by assigning a static color to each object upon ray intersection. In reality a ray of light will take on the colour of a surfaces albedo, due to a partial reflection of all the wavelengths of white light.
+In the initial implementation~\ref{fig:unlitcornell}, I simplified the shading process by assigning a static colour to each object upon ray intersection. In reality, a ray of light will take on the colour of a surface albedo due to a partial reflection of all the wavelengths of white light.
 
-This ray may then propagate through the scene, interacting with other objects and accumulating color contributions along its path. The material properties dictate whether the light is absorbed, reflected, or refracted at each interaction point. For example darker surfaces absorb more light and thus appear darker.
+This ray may then propagate through the scene, interacting with other objects and accumulating colour contributions. The material properties dictate whether the light is absorbed, reflected, or refracted at each interaction point. For example, darker surfaces absorb more light and thus appear darker.
 
 \subsubsection{Diffuse Reflection}
-The first material I will cover is a perfectly diffuse one as it is the easiest to understand. If a ray hits the surface it will bounce randomly in any direction (with a little less brightness). This ray will then hit something else, and so on, and so on until it reaches a max recursion depth (at which point we can return black). This type of perfectly diffuse material is not the most realistic but is a good starting point, used by many of the first raytracing papers \cite{Whitted1980}. Here is what this method would look like with global illumination:
+The first material I will cover is perfectly diffused as it is easy to understand. If a ray hits the surface, it will bounce randomly in any direction (with slightly less brightness). This ray will then hit something else, and so on, until it reaches a max recursion depth (at which point we can return black). This perfectly diffuse material is not the most realistic but is a good starting point, used by many of the first raytracing papers \cite{Whitted1980}. Here is what this method would look like with global illumination:
 
 \begin{figure}[H]
     \centering
@@ -427,9 +480,8 @@ The first material I will cover is a perfectly diffuse one as it is the easiest 
     \label{fig:perfdiffmat}
 \end{figure}
 
-Though this simple method yields good results, in reality, the Lambert Cosine Law comes into effect. This law states that the intensity of reflected light is dependent on the cosine of the angle between the incoming light direction and the surface normal.
+Though this simple method yields good results, in reality, the Lambert Cosine Law comes into effect. This law states that the intensity of reflected light depends on the angle's cosine between the incoming light direction and the surface normal. Therefore, we need to adjust the power of reflection according to this principle.
 
-Therefore, we need to adjust the power of reflection according to this principle.
 The intensity \(I\) of the reflected light is proportional to the cosine of the angle \(\theta\) between the light direction \(\mathbf{L}\) and the surface normal \(\mathbf{N}\):
 \[
     I = I_0 \cdot \max(\mathbf{L} \cdot \mathbf{N}, 0)
@@ -594,12 +646,12 @@ SSAA significantly reduces aliasing artifacts, producing more realistic and visu
 \section{Monte Carlo Methods for Ray Tracing}
 \label{sec:monte-carlo}
 
-This section focuses on enhancing the efficiency and quality of our path tracer through the application of advanced probabilistic techniques. While we won't be introducing new visual elements, these methods will significantly improve the performance and convergence rate of our ray tracer.
+This section focuses on enhancing the efficiency and quality of our path tracer through the application of advanced probabilistic techniques. While we will not introduce new visual elements, these methods will significantly improve our ray tracer's performance and convergence rate.
 
 \subsection{Improved Random Sampling}
-In our previous implementation of Super Sampling Anti-Aliasing (SSAA), we employed a simple random ray generation strategy for each pixel. This approach is very effective, however it suffers from high variance, leading to slower convergence and potentially noisy results. To address this limitation, I will introduce stratified sampling.
+In our previous Super Sampling Anti-Aliasing (SSAA) implementation, we employed a simple random ray generation strategy for each pixel. This approach is very effective; however, it suffers from high variance, leading to slower convergence and potentially noisy results. To address this limitation, I will introduce stratified sampling.
 
-Stratified sampling involves dividing the sampling domain into non-overlapping regions, or strata, and then sampling from within each stratum. It can help to imagine placing an 2x2 square over each pixel, and then ensuring that you sample from each of the four quadrants. If we compare this to random sampling 4 times it makes intuitive sense that we would get a larger amount of information (on average).
+Stratified sampling involves dividing the sampling domain into non-overlapping regions, or strata, and sampling from within each stratum. It can help to imagine placing a 2x2 square over each pixel and then ensuring you sample from each quadrant. If we compare this to random sampling 4 times, it makes intuitive sense that we would get more information (on average).
 The stratified approach ensures a more uniform distribution of samples across the pixel, which can be expressed mathematically as follows:
 
 Simple Random Sampling:
@@ -626,14 +678,13 @@ Where $\sigma_i^2$ is the variance within the $i$-th stratum, $k$ is the number 
 This formula is derived by examining the variance over the entire domain and adjusting for the reduced variance within each stratum. Here’s why each term appears:
 
 \begin{enumerate}
-    \item Total Variance $\sigma^2$: This represents the overall variability of the function across the entire domain, without any stratification. It is the "baseline" amount of variance we would have if we didn’t use stratified sampling.
+    \item Total Variance $\sigma^2$: This represents the overall variability of the function across the entire domain without any stratification. It is the "baseline" amount of variance we would have if we did not use stratified sampling.
 
     \item Reducing Variance with Strata: When we divide the domain into $k$ strata, each one is designed to be more homogeneous than the domain as a whole. As a result, the variance within each stratum, $\sigma_i^2$, is expected to be smaller than the total variance $\sigma^2$. The term $\frac{1}{k} \sum_{i=1}^k \sigma_i^2$ represents the average of these reduced variances across all $k$ strata.
 
-    \item Variance Reduction Effect: The formula subtracts $\frac{1}{k} \sum_{i=1}^k \sigma_i^2$ from $\sigma^2$ because the stratified approach lowers the overall variance by the average of these within-strata variances. So, we’re essentially saying, “start with the total variance, but then subtract out the portion that stratification has reduced.”
+    \item Variance Reduction Effect: The formula subtracts $\frac{1}{k} \sum_{i=1}^k \sigma_i^2$ from $\sigma^2$ because the stratified approach lowers the overall variance by the average of these within-strata variances. So, we essentially say, "Start with the total variance, but then subtract out the portion that stratification has reduced."
 
-    \item Normalization by Total Samples $n$: Finally, we divide by $n$ because the variance of the mean over $n$ samples scales down as more samples are taken \footnote{The central limit theorem states that the distribution of sample means tends to approximate a normal distribution as the sample size $n$ increases, regardless of the distribution of the original data. Additionally, the variability (or variance) of the sample mean decreases with more samples, by a factor of $\frac{1}{n}$. This is why dividing by $n$ is necessary; as $n$ grows, the variance of our mean estimate $\hat{f}$ decreases, leading to a smoother, more accurate result.}.
-
+    \item Normalization by Total Samples $n$: Finally, we divide by $n$ because the variance of the mean over $n$ samples scales down as more samples are taken \footnote{The central limit theorem states that the distribution of sample means tends to approximate a normal distribution as the sample size $n$ increases, regardless of the distribution of the original data. Additionally, the variability (or variance) of the sample mean decreases with more samples by a factor of $\frac{1}{n}$. This is why dividing by $n$ is necessary; as $n$ grows, the variance of our mean estimate $\hat{f}$ decreases, leading to a smoother, more accurate result.}.
 
 \end{enumerate}
 
@@ -664,8 +715,7 @@ Comparing the results:
     \item[] Stratified Sampling Variance: $0.0586\sigma^2$
 \end{enumerate}
 
-We can see that even in this simplified model, stratified sampling reduces the variance compared to simple random sampling. Unfortunately we cannot declare that we should now have one million strata for the best results as the benefits plateau with increasing strata. The variance reduction depends on how much the function varies within each stratum. When there are too many strata, each stratum becomes tiny, capturing little additional information about the function's overall behavior. Consequently, the average variance within each stratum, $\sigma_i^2$, approaches zero, which makes the formula $\text{Var}(\hat{f}_s) = \frac{1}{n} \left( \sigma^2 - \frac{1}{k} \sum_{i=1}^k \sigma_i^2 \right)$ asymptotically approach $\frac{\sigma^2}{n}$, essentially the same as simple random sampling.
-
+We can see that even in this simplified model, stratified sampling reduces the variance compared to simple random sampling. Unfortunately, we cannot declare that we should now have one million strata for the best results as the benefits plateau with increasing strata. The variance reduction depends on how much the function varies within each stratum. When too many strata exist, each stratum becomes tiny, capturing little additional information about the function's overall behaviour. Consequently, the average variance within each stratum, $\sigma_i^2$, approaches zero, which makes the formula $\text{Var}(\hat{f}_s) = \frac{1}{n} \left( \sigma^2 - \frac{1}{k} \sum_{i=1}^k \sigma_i^2 \right)$ asymptotically approach $\frac{\sigma^2}{n}$, essentially the same as simple random sampling.
 
 Figure \ref{fig:strat_comparison} provides a visual comparison between random sampling and stratified sampling, both using 64 rays per pixel.
 
@@ -687,12 +737,11 @@ Figure \ref{fig:strat_comparison} provides a visual comparison between random sa
     \caption{Comparison of image rendered with 64 rays per pixel}
     \label{fig:strat_comparison}
 \end{figure}
-
-The benefits of stratified sampling are most pronounced in areas with high frequency details or sharp transitions, such as the edges of objects. This may be hard to see with such a simple scene, but if you look in the very center of the image you should notice that you can see that the stratified sampling approach (Figure \ref{fig:stratified_sampling}) produces more defined edges for the boxes against the background compared to the random sampling method (Figure \ref{fig:randomsamplesno_strat}). This improved edge definition is a result of the more uniform distribution of samples across each pixel, which better captures the transition between object boundaries and their surroundings.
+The benefits of stratified sampling are most pronounced in areas with high-frequency details or sharp transitions, such as the edges of objects. This may be hard to see with such a simple scene. However, if you look in the very centre of the image, you should notice that you can see that the stratified sampling approach (Figure \ref{fig:stratified_sampling}) produces more defined edges for the boxes against the background compared to the random sampling method (Figure \ref{fig:randomsamplesno_strat}). This improved edge definition results from the more uniform distribution of samples across each pixel, better capturing the transition between object boundaries and their surroundings.
 
 \subsection{Importance Sampling}
 
-\paragraph{The Problem of Noise and Slow Convergence} The current theory mentioned allows for an elegant pathtracer which is capable of producing visually realistic images, however it has some very fundamental problems. To illustrate these let's look at our cornell box scene with one ray fired per pixel (so no SSAA), and a maximum bounce of 1000 (much higher than 99\% of rays will get to).
+\paragraph{The Problem of Noise and Slow Convergence} The current theory allows for an elegant path tracer capable of producing visually realistic images. However, it has some very fundamental problems. To illustrate these, let us look at our Cornell box scene with one ray fired per pixel (so no SSAA) and a maximum bounce of 1000 (much higher than 99\% of rays will get to).
 
 \begin{figure}[H]
     \centering
@@ -705,7 +754,7 @@ As we can see most rays bounce around, never hit a light and then bounce back ou
 
 \paragraph{Biasing Rays Towards Light Sources}
 
-To address this issue, we can bias our ray sampling towards light sources. A Naive approach is to fire our rays into the scene, and then on a intersection, check if the light is visible and send the ray to a random point on the light. This yields something look like this:
+We can bias our ray sampling towards light sources to address this issue. A naive approach is to fire our rays into the scene and then, at an intersection, check if the light is visible and send the ray to a random point on the light. This yields something like this:
 
 \begin{figure}[H]
     \centering
@@ -714,11 +763,12 @@ To address this issue, we can bias our ray sampling towards light sources. A Nai
     \label{fig:onesampimportancenopdf}
 \end{figure}
 
-It is clear now that we have accrued the exact opposite problem! Biasing all rays towards light sources introduces a new problem: the rendered image becomes excessively bright. This occurs because we're now oversampling the light sources without properly accounting for this bias in our estimator. Interestingly we have a much clearer idea of the scene from this technique, which indicates we are on the right track.
+It is clear now that we have accrued the exact opposite problem! Biasing all rays towards light sources introduces a new problem: the rendered image becomes excessively bright. This occurs because we are now oversampling the light sources without adequately accounting for this bias in our estimator. Interestingly, this technique gives us a much clearer idea of the scene, indicating we are on the right track.
 
 \subsubsection{Correcting Bias}
 
-In our ideal world we would be able to do the exact same thing we just did, but for all the rays that go directly to the light, we turn the contribution to the final image down, and for each ray that has not directly hit a light (quite unlikely) we turn their contribution way up.
+
+In our ideal world, we would be able to do the same thing we just did, but for all the rays that go directly to the light, we turn the contribution to the final image down, and for each ray that has not directly hit a light (quite unlikely) we turn their contribution way up.
 
 We need two mathematical tools for this:
 \begin{enumerate}
@@ -726,12 +776,12 @@ We need two mathematical tools for this:
     \item A method that, when given a biased random direction, tells us how likely it was to be generated (so that we can turn down/up its intensity by how much it'll be sampled)
 \end{enumerate}
 
-We already have the former, just pick a random point on the light and send a ray in that direction. But we need to utilise a Probability Density Function for the latter.
-In statistics we can utilise the concept of a Probability Density Function (PDF). A PDF, denoted as $p(\omega)$, describes the likelihood of sampling a particular direction $\omega$. For our light-biased sampling strategy, the PDF will have higher values for directions towards the light and lower values elsewhere.
+We already have the former; pick a random point on the light and send a ray in that direction. However, we need to utilise a probability density function for the latter.
+In statistics, we can utilise the concept of a Probability Density Function (PDF). A PDF, denoted as $p(\omega)$, describes the likelihood of sampling a particular direction $\omega$. For our light-biased sampling strategy, the PDF will have higher values for directions towards the light and lower values elsewhere.
 
 \paragraph{Deriving our Light's PDF}
 
-To understand how we arrive at the PDF for our light source, let's consider the geometry of the situation. Imagine we have a point on a surface in our scene, and we want to sample the light source from this point. The light source, in this case, is a quad (a rectangular area light) on the ceiling of our Cornell box.
+To understand how we arrive at the PDF for our light source, let us consider the geometry of the situation. Imagine we have a point on a surface in our scene, and we want to sample the light source from this point. In this case, the light source is a quad (a rectangular area light) on the ceiling of our Cornell box.
 
 \begin{figure}[H]
     \centering
@@ -741,7 +791,6 @@ To understand how we arrive at the PDF for our light source, let's consider the 
 \end{figure}
 
 As illustrated in Figure \ref{fig:quadprojection}, the light source projects onto a portion of the unit hemisphere centered at our surface point (e.g. the top of one of the boxes). Our goal is to derive a PDF that correctly represents the probability of sampling any direction within this projected area.
-
 
 First, consider a subsection area $dA$ on the light source. If we sample uniformly on the light, the probability of hitting this area is simply $\frac{dA}{A}$, where $A$ is the total area of the light.
 
@@ -768,13 +817,13 @@ This derivation gives us our final PDF for sampling the light source:
 
 $$p(\omega) = \frac{r^2}{|\cos\theta| \cdot A}$$
 
-It accounts for the distance to the light, making distant parts less likely to be sampled, which aligns with the fact that a given solid angle corresponds to a larger area on a distant surface. It also considers the light's orientation, reducing the probability of sampling grazing angles, which project to smaller solid angles from the surface's perspective. Finally, it normalizes by the light's total area, ensuring that larger lights have proportionally larger sampling probabilities.
+It accounts for the distance to the light, making distant parts less likely to be sampled, which aligns with the fact that a given solid angle corresponds to a larger area on a distant surface. It also considers the light's orientation, reducing the probability of sampling grazing angles, which project to smaller solid angles from the surface's perspective. Finally, it normalizes by the light's total area, ensuring larger lights have proportionally larger sampling probabilities.
 
 \paragraph{Applying the PDF in Our Path Tracer}
 
-Now that we have derived our PDF, we can use it to correct the bias introduced by our light-sampling strategy. When we generate a sample direction towards the light, we compute the PDF value for that direction using the formula above. We then use this PDF value to divide the contribution of the sample.
+Now that we have derived our PDF, we can correct the bias introduced by our light-sampling strategy. When we generate a sample direction towards the light, we compute the PDF value for that direction using the formula above. We then use this PDF value to divide the contribution of the sample.
 
-By dividing by the PDF, we're effectively "turning down" the contribution of samples that were more likely to be generated (those towards the light) and "turning up" the contribution of samples that were less likely. This correction ensures that our estimator remains unbiased, despite our biased sampling strategy:
+By dividing by the PDF, we are effectively "turning down" the contribution of samples that were more likely to be generated (those towards the light) and "turning up" the contribution of samples that were less likely to have occurred. This correction ensures that our estimator remains unbiased despite our biased sampling strategy:
 
 \begin{figure}[H]
     \centering
@@ -782,18 +831,18 @@ By dividing by the PDF, we're effectively "turning down" the contribution of sam
     \caption{Importance Sampled Cornell Box (300 samples)}
     \label{fig:importancesampled}
 \end{figure}
-As illustrated in Figure \ref{fig:importancesampled}, with our PDF working in conjunction with importance sampling we have exhibited a much better distribution of light contributions, reducing noise and enhancing the image quality with FAR fewer samples.
+As illustrated in Figure \ref{fig:importancesampled}, with our PDF working in conjunction with importance sampling, we have exhibited a much better distribution of light contributions, reducing noise and enhancing the image quality with FAR fewer samples.
 
 \subsubsection{Combining PDFs}
 
-So great, we have a method of getting a picture of our scene very quickly. Unfortunately, in this process we have also lost our beautiful scattered bouncing, which approximates realistic lighting interactions closely.
+So great, we have a method of getting a picture of our scene very quickly. Unfortunately, in this process, we have also lost our beautiful scattered bouncing, which closely approximates realistic lighting interactions.
 
-The easiest way to get this back is to convert our previous surface scattering into a PDF, this is because of the awesome thing about PDFs which is that you can just use linear mixtures of them to form mixture densities, which themselves are also PDFs! As long as the probability weights all add up to one. If we combined the light sampling PDF with our hemispherical scattering PDF we would get the best of both worlds, a very quick image, which also converges to a very pretty image over time.
+The easiest way to get this back is to convert our previous surface scattering into a PDF. We do this because of the awesome feature of PDFs: you can use linear mixtures to form mixture densities, which are also PDFs! Provided the probability weights all add up to one. If we combined the light sampling PDF with our hemispherical scattering PDF, we would get the best of both worlds: a very quick image converging into a very pretty image over time.
 
 
 \paragraph{Lambertian Reflection as a PDF}
 
-For Lambertian surfaces, we use a cosine-weighted Probability Density Function (PDF) to represent the scattering distribution. This aligns with Lambert's cosine law, which states that the amount of light reflected in a particular direction is proportional to the cosine of the angle between that direction and the surface normal.
+For Lambertian surfaces, we use a cosine-weighted Probability Density Function (PDF) to represent the scattering distribution. This aligns with Lambert's cosine law, which states that the amount of light reflected in a particular direction is proportional to the cosine angle between that direction and the surface normal.
 
 The PDF for a Lambertian surface is given by:
 
@@ -804,9 +853,7 @@ $\omega$ is the direction of scattered light
 $\theta$ is the angle between $\omega$ and the surface normal
 $\pi$ is used for normalization
 
-It's normalized over the hemisphere, integrating to 1 over all possible directions.
-It gives higher probability to directions closer to the surface normal, which aligns with the behavior of diffuse surfaces.
-It's rotationally symmetric around the surface normal. This should align with the previous explanation of shading models.
+This PDF fulfils all the necessary requirements. It is normalized over the hemisphere, integrating to 1 over all possible directions. It gives a higher probability to directions closer to the surface normal, which aligns with the behaviour of diffuse surfaces and is rotationally symmetric around the surface normal. This should align with the previous explanation of shading models \ref{color_shading}.
 
 To implement multiple importance sampling, we can combine this cosine PDF with our previously derived light sampling PDF. A simple approach is to use a weighted sum:
 
@@ -902,16 +949,16 @@ I have now finished in my imparting of path-tracer specific knowledge, and will 
 
 \subsection{System Architecture}
 
-\paragraph{Design Principles Behind the Modular Architecture} Before architechting a complex system it is essential to keep several non-functional attributes in mind and to always assess your architectural decisions against these.
+\paragraph{Design Principles Behind the Modular Architecture} Before architecting a complex system, keeping several non-functional attributes in mind and continually assessing your architectural decisions against these is essential.
 A path tracer requires several key non-functional attributes (ordered by descending importance):
 
 \begin{enumerate}
-    \item Performance: The system must be able to handle complex scenes and produce high-quality renders in a reasonable time frame.
-    \item Extensibility: As rendering techniques evolve, the system should be able to incorporate new algorithms and features easily.
+    \item Performance: The system must handle complex scenes and produce high-quality renders in a reasonable time frame.
+    \item Extensibility: As rendering techniques evolve, the system should be able to incorporate new algorithms and features quickly.
     \item Maintainability: The codebase should be easy to understand, debug, and modify.
 \end{enumerate}
 
-With these requirements in mind it naturally leads to a modular monolith approach. I find that modular design is suited to our non-functional attributes as it allows for the developer to have clear interfaces between modules, making it easier to modify or replace individual components without affecting the entire system (imagine you want to switch to the Vulkan API, this should be quite an easy task!). This approach is particularly well-suited for a path tracer, where tight integration between components is necessary for performance, but clear separation of concerns is crucial for ongoing development and maintenance.
+These requirements naturally lead to a modular monolith approach. I find that modular design is suited to our non-functional attributes as it allows for the developer to have clear interfaces between modules, making it easier to modify or replace individual components without affecting the entire system (imagine you want to switch to the Vulkan API, this should be quite an easy task!). This approach is particularly well-suited for a path tracer, where tight integration between components is necessary for performance. However, a clear separation of concerns is crucial for ongoing development and maintenance.
 
 \paragraph{Overview of Core Components and Their Interactions}
 
@@ -934,10 +981,10 @@ The Rendering Engine acts as the central hub, coordinating the activities of oth
     \label{fig:rendererdependency}
 \end{figure}
 
-Here we notice all the other modules in use, the camera module providing its properties via its init method, and generating the primary rays. These rays in turn will depend on the Geometry folder, which contains provides the Abstraction for Hittable Objects, and  interface to interact with these.
 
-We can also notice a a neat division of modularity here, all code related to window management, including any GUI is entirely encapsulated, and \textbf{only} depended on by our renderer. This makes switching technologies extremely easy if needed.
+Here, we notice all the other modules in use, with the camera module providing its properties via its init method and generating the primary rays. These rays, in turn, will depend on the Geometry folder, which provides the Abstraction for Hittable Objects and the interface to interact with these.
 
+We can also notice a neat division of modularity here; all code related to window management, including any GUI, is entirely encapsulated, and \textbf{only} depended on by our renderer. This makes switching technologies extremely easy if needed.
 
 \paragraph{Procedure calls}  The runtime of the path tracer can be best understood by examining the main renderer's call stack and the specific process of ray-object intersection.
 \begin{figure}[H]
@@ -998,11 +1045,12 @@ Here we find an example of a ray intersecting with an object (specifically a qua
     \item \textbf{HitRecord::setFaceNormal} sets the intersected face normal for shading calculations.
 \end{enumerate}
 
-Notice how with this architecture, with applied SOLID principles, allows us to provide a robust foundation and remain adaptable to future enhancements. An example of this would be implementing a Bounding Volume Hierarchy, for more efficient ray interesections. This could very easily be "slotted" into our existing architechture (which in fact I have done in the programs source code).
+Notice how this architecture, with applied SOLID principles, allows us to provide a robust foundation and remain adaptable to future enhancements. An example would be implementing a Bounding Volume Hierarchy for more efficient ray intersections. This could very quickly be "slotted" into our existing architecture (which I have done in the program's source code)
 
 \subsection{Utilising OpenGL for Visualising Convergence}
 
-The final subject I wish to tackle in this paper is a "debug mode" I have added to the path tracer, which was very helpful during its development. The entire path tracer runs on the CPU currently (much slower than a GPU, but \textit{far} easier to develop), and thus we have no easy method of quickly rendering to a screen (versus simply writing to an image file). We currently cannot provide any insight into the image's gradual convergence process. To address this limitation, I implemented a progressive rendering system using OpenGL (utilising the GPU), allowing for real-time visualization of the path tracing process.
+
+The final subject I wish to tackle in this paper is a "debug mode" I have added to the path tracer, which was very helpful during its development. The entire path tracer runs on the CPU currently (much slower than a GPU, but \textit{far} easier to develop), and thus, we have no easy method of quickly rendering to a screen (versus simply writing to an image file). We currently cannot provide any insight into the image's gradual convergence process. To address this limitation, I implemented a progressive rendering system using OpenGL (utilising the GPU), allowing for real-time visualisation of the path tracing process.
 
 \paragraph{Progressive Rendering} The core of this visualization technique is an accumulation buffer. Instead of directly outputting the final pixel colors after x amounts of samples per pixel, I continuously update an accumulation buffer:
 
@@ -1045,25 +1093,25 @@ void main()
 }
 \end{minted}
 
-The advantage here is that a simple CPU Path traced application is able to utilise the GPU as an intermediate representation. Thus, we do not need to go through the extensive effort of converting our Cpp code to shader code. This has made the Path tracer's development process significantly easier, becoming much easier to identify and debug issues in the path tracing algorithm. One area of consideration is the amount of time to to transfer the data from the CPU to GPU, if we were to do this 100 times a second this would be very very slow and laggy. I found that updating the window once per full viewport render was good enough.
+The advantage here is that a simple CPU-path-traced application can utilise the GPU as an intermediate representation. Thus, we can skip the extensive effort of converting our Cpp code to shader code. This has made the Path tracer's development process significantly easier, making it easier to identify and debug issues in the path tracing algorithm. One area of consideration is the amount of time to transfer the data from the CPU to the GPU; if we were to do this 100 times a second, this would be very slow and laggy. I found that updating the window once per full viewport render was good enough.
 
 \section{Conclusion}
 \label{sec:conclusion}
 \subsection{Summary of Key Points}
-In this report, I tried to lay out the foundations of everything a path tracer is and end up using Monte Carlo methods to simulate realistic lighting in a 3D scene. I hope I have managed to illustrate the effectiveness of this technique and especially in the speed and quality of the rendered images, making the path tracer both computationally efficient and visually realistic.
+In this report, I tried to lay out the foundations of everything a path tracer is and ended up using Monte Carlo methods to simulate realistic lighting in a 3D scene. I hope I have illustrated the effectiveness of this technique, especially in the speed and quality of the rendered images, making the path tracer both computationally efficient and visually realistic.
 
 \subsection{Future Work}
 
 While this work has demonstrated the power of path tracing, there remain many opportunities for further enhancement and exploration, some of which include:
 \begin{itemize}
-    \item Bounding Volume Hierarchies (BVH): While the codebase includes an implementation, this report did not cover BVH in detail. Future work could focus on optimizing BVH construction and traversal to improve performance, essential in scenes with complex geometries.
+    \item Bounding Volume Hierarchies (BVH): While the codebase includes an implementation, this report did not cover BVH in detail. Future work could focus on optimising BVH construction and traversal to improve performance, essential in scenes with complex geometries.
 
     \item Support for .obj File Handling: Incorporating functionality for reading and rendering more complex object geometries from .obj files would allow us to make much more diverse scenes.
 
     \item Transition to GPU Rendering: Migrating the path tracing computations to the GPU could significantly reduce rendering times and enable real-time applications.
 \end{itemize}
 
-In a more general sense, I thoroughly recommend exploring graphics papers (both old and new!), and seeing if you can implement any of the techniquest they talk about. In particular I am a fan of Nvidia's and Pixar's papers. Happy reading!
+In a more general sense, I recommend exploring graphics papers (both old and new!) and seeing if you can implement any of the techniques they talk about. In particular, I am a fan of Nvidia's and Pixar's papers. Happy reading!
 
 \section{References}
 \label{sec:references}
