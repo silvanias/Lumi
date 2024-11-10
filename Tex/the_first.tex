@@ -834,11 +834,11 @@ The combined PDF allows us to sample rays in a way that balances direct light sa
     \label{fig:combinedPDFimportancesampled}
 \end{figure}
 
-As you can see we have now arrived back at our original image before looking into importance sampling.
+As you can see we have now arrived back at an image close to our original before looking into importance samwpling.
 
 \subsection{Analysis of Results}
 
-This does raise the point of why we bothered to go through all the maths, and so I will take this section to quantitatively demonstrate how much of a speed advantage we have just gained.
+This does raise the point of why we bothered to go through all the maths to arrive at a very similar looking image. I will take this section to quantitatively demonstrate how much of a speed advantage we have just gained.
 
 \paragraph{PSNR} The first metric I will use to do this is the Peak Signal-to-Noise Ratio (PSNR) which is a standard metric for assessing image quality differences. PSNR is most easily defined via the mean squared error (MSE). Given a noise-free m×n monochrome image I and its noisy approximation K, MSE is defined as:
 \[
@@ -902,16 +902,12 @@ It should be stressed here that \textit{both methods ultimately produce the same
 \section{Technical Description of the System}
 \label{sec:system-description}
 
-Put prerequistes here, opengl cpp etc.
-NOT TRUE come up with a MORE ACCURATE DESCRIPTION
-In this section, we will focus on how the discussed ele
+I have now finished in my imparting of path-tracer specific knowledge, and will change to a description of how one might build and architect the topics covered in this paper. It would be helpful if the reader would have knowledge of C++ and OpenGL, as I will include some code snippets.
 
 \subsection{System Architecture}
 
-\subsubsection{Design Principles Behind the Modular Architecture}
-
-I have found that when architechting a complex system it is essential to keep several non-functional attributes in mind and to always assess your architectural decisions against these.
-A path tracer requires several key non-functional attributes to be effective and maintainable (ordered by descending importance):
+\paragraph{Design Principles Behind the Modular Architecture} Before architechting a complex system it is essential to keep several non-functional attributes in mind and to always assess your architectural decisions against these.
+A path tracer requires several key non-functional attributes (ordered by descending importance):
 
 \begin{enumerate}
     \item Performance: The system must be able to handle complex scenes and produce high-quality renders in a reasonable time frame.
@@ -919,106 +915,144 @@ A path tracer requires several key non-functional attributes to be effective and
     \item Maintainability: The codebase should be easy to understand, debug, and modify.
 \end{enumerate}
 
-With these requirements in mind it naturally leads to a modular monolith approach. I find that Modular design is suited to our non-functional attributes as:
+With these requirements in mind it naturally leads to a modular monolith approach. I find that modular design is suited to our non-functional attributes as it allows for the developer to have clear interfaces between modules, making it easier to modify or replace individual components without affecting the entire system (imagine you want to switch to the Vulkan API, this should be quite an easy task!). This approach is particularly well-suited for a path tracer, where tight integration between components is necessary for performance, but clear separation of concerns is crucial for ongoing development and maintenance.
 
-\begin{itemize}
-    \item Encapsulation of Functionality: Each module encapsulates a specific set of related functions, allowing for optimized performance within modules and clear interfaces between them.
-    \item Loose Coupling: Modules interact through well-defined interfaces, making it easier to modify or replace individual components without affecting the entire system (imagine you want to switch to the Vulkan API, this should be quite an easy task!).
-    \item Parallel Development: Different teams or developers can work on separate modules simultaneously, speeding up development and integration of new features.
-    \item Testability: Individual modules can be tested in isolation, facilitating more thorough and efficient testing processes.
-\end{itemize}
-
-The modular monolith approach strikes a balance between the simplicity of a monolithic architecture and the flexibility of a fully distributed system. This approach is particularly well-suited for a path tracer, where tight integration between components is necessary for performance, but clear separation of concerns is crucial for ongoing development and maintenance.
-
-\subsubsection{Overview of Core Components and Their Interactions}
+\paragraph{Overview of Core Components and Their Interactions}
 
 The following C4 diagram provides an overview of the path tracer's modules, along with their responsibilities and interactions:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{images/lumi_pml.png}
+    \includegraphics[width=\textwidth]{images/software_architecture/lumi_pml.png}
     \caption{C4 diagram of the path tracer system architecture}
     \label{fig:c4-diagram}
 \end{figure}
 
-The Rendering Engine acts as the central hub, coordinating the activities of other modules. It delegates specific tasks to specialized modules (e.g., ray generation to the Camera Module, object intersection tests to the Geometry Module) and applies materials and shaders as needed.
+The main loop initialises the GLFW window we use for displaying the image, and summons the renderer to start.
+The Rendering Engine acts as the central hub, coordinating the activities of other modules. Below we can trace the renderer's dependencies in the path tracing code:
 
-\subsubsection{Main Control Loop's Role in Managing Rendering Operations}
-Here talk about call stack, main loop is the top level which sets up stuff, and summons the renderer to start.
-The main control loop orchestrates rendering, coordinating ray generation, shading, and image synthesis.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/software_architecture/directory_dependencies.png}
+    \caption{Renderer's dependencies in code}
+    \label{fig:rendererdependency}
+\end{figure}
 
-\subsection{Core Components}
+Here we notice all the other modules in use, the camera module providing its properties via its init method, and generating the primary rays. These rays in turn will depend on the Geometry folder, which contains provides the Abstraction for Hittable Objects, and  interface to interact with these.
 
-\paragraph{Geometry: An Abstraction for Hittable Objects} Provides a unified interface for diverse geometrical shapes.
+We can also notice a a neat division of modularity here, all code related to window management, including any GUI is entirely encapsulated, and \textbf{only} depended on by our renderer. This makes switching technologies extremely easy if needed.
 
-\paragraph{Bounding Structures: Use of BVH for Efficient Intersection Tests}
-Employs BVH for accelerated intersection tests, enhancing performance.
 
-\paragraph{Scene Manager: Object Storage and Scene Graph Management}
-The Scene Manager organizes objects in a scene graph, optimizing rendering operations.
+\paragraph{Procedure calls}  The runtime of the path tracer can be best understood by examining the main renderer's call stack and the specific process of ray-object intersection.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/software_architecture/render_loop_call.png}
+    \caption{Diagram of the renderer's call stack}
+    \label{fig:renderercallstack}
+\end{figure}
 
-\paragraph{Renderer: Ray Generation and Intersection Handling}
-Handles ray generation and calculates light interactions with surfaces.
+\begin{enumerate}
+    \item \textbf{Render::renderLoop} initiates the process. Within the loop:
+          \begin{description}
+              \item[Render::clearFrame] Clears the window
+              \item[Utils::Color::linearToGamma] Color accuracy conversion
+              \item[Camera::render] Generates the image
+              \item[Shader::use] Applies the shaders to the window
+              \item[Render::updateTexture] Updates the window
+          \end{description}
 
-\paragraph{Camera Module: Virtual Camera Settings and Primary Ray Generation}
-Simulates camera properties and generates primary rays for rendering.
+    \item \textbf{Camera::render} generates rays using \textbf{Camera::getRandomStratifiedRay} for stratified sampling.
+
+    \item For each ray:
+          \begin{description}
+              \item[Ray::direction] Computes ray path
+              \item[Camera::rayColor] Calculates color contribution
+              \item[MixturePDF] Implements importance sampling (both generating a ray and getting its PDF Value)
+              \item[HittableList::hit] Tests for object intersections
+          \end{description}
+
+    \item Recursive calls to \textbf{Camera::rayColor} handle light bounces.
+\end{enumerate}
+This structure incorporates stratified sampling, importance sampling, and recursive ray tracing for global illumination.
+
+Here we find an example of a ray intersecting with an object (specifically a quad):
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/software_architecture/quad_loop_call.png}
+    \caption{Diagram of a quad's call stack}
+    \label{fig:quadcallstack}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Quad::hit} initiates the intersection test.
+
+    \item Ray properties used:
+          \begin{description}
+              \item[Ray::at] determines the ray's position.
+              \item[Ray::origin] and \textbf{Ray::direction} establish the ray's start and trajectory.
+          \end{description}
+
+    \item Intersection checks:
+          \begin{description}
+              \item[Interval::contains] verifies the intersection is within a valid range.
+              \item[Quad::inQuad] confirms the intersection is within the quad's boundaries.
+          \end{description}
+
+    \item \textbf{HitRecord::setFaceNormal} sets the intersected face normal for shading calculations.
+\end{enumerate}
+
+Notice how with this architecture, with applied SOLID principles, allows us to provide a robust foundation and remain adaptable to future enhancements. An example of this would be implementing a Bounding Volume Hierarchy, for more efficient ray interesections. This could very easily be "slotted" into our existing architechture (which in fact I have done in the programs source code).
 
 \subsection{Utilising OpenGL for Visualising Convergence}
+NEEDS CLARITY ON GPU VS CPU
 
-In traditional path tracing implementations, the final image is typically output once the required number of samples per pixel has been reached. However, this approach doesn't provide insight into the convergence process. To address this limitation, we've implemented a progressive rendering system using OpenGL, allowing for real-time visualization of the path tracing process.
+The final subject I wish to tackle in this paper is a "debug mode" I have added to the path tracer, which was very helpful during its development. The entire path tracer runs on the CPU currently, and thus we have no easy method of quickly rendering to a screen (versus simply writing to an image file). We currently cannot provide any insight into the image's convergence process. To address this limitation, I implemented a progressive rendering system using OpenGL (utilising the GPU), allowing for real-time visualization of the path tracing process.
 
-\paragraph{Progressive Rendering} The core of this visualization technique is the accumulation buffer. Instead of directly outputting the final pixel colors, we continuously update an accumulation buffer:
+\paragraph{Progressive Rendering} The core of this visualization technique is an accumulation buffer. Instead of directly outputting the final pixel colors after x amounts of samples per pixel, I continuously update an accumulation buffer:
 
 \begin{minted}{cpp}
 vector<vec3> accumulationBuffer(IMAGE_SIZE, 0);
 vector<int> sampleCount(IMAGE_SIZE, 0);
 \end{minted}
 
-The \texttt{accumulationBuffer} stores the sum of all samples for each pixel, while \texttt{sampleCount} keeps track of the number of samples per pixel.
+This \texttt{accumulationBuffer} stores the sum of all samples for each pixel, while the \texttt{sampleCount} keeps track of the number of samples per pixel. This allows us to at any point calculate the state of the current images pixels:
+\begin{minted}{cpp}
+currentImage[i] = accumulationBuffer[i] / sampleCount[i];
+\end{minted}
 
-The rendering process is modified to update the accumulation buffer after each sample:
+We update the accumulation buffer after each sample via this code:
 
 \begin{minted}{cpp}
 accumulationBuffer[index] += rayColor(r, world, maxDepth);
 sampleCount[index] += 1;
 \end{minted}
 
-This incremental approach enables us to visualize the gradual convergence of the image over time.
-To display the progressively rendered image, we utilize OpenGL's texture mapping capabilities. The current state of the render is mapped to a texture that covers the entire window:
+To display the progressively rendered image, we utilize OpenGL's texture mapping capabilities.
+The current state of the rendered image is mapped to a texture that covers the entire window:
 
 \begin{minted}{cpp}
 void updateTexture(unsigned int texture, const vector<vec3> &image,
-const int &WIDTH, const int &HEIGHT)
+    const int &WIDTH, const int &HEIGHT)
     {
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexSubImage2D(WIDTH, HEIGHT, image.data());
     }
 \end{minted}
 
-MENTION MAPPING TO A UNIFORM 2D IN FRAGMENT SHADER AND OPENGL PIPELINE HERE
-This texture is then rendered onto a quad that fills the entire screen, allowing for real-time updates of the rendering progress.
+From there we map to a uniform in our fragment shader:
 
-\paragraph{Benefits of Real-time Visualization}
+\begin{minted}{cpp}
+uniform sampler2D screenTexture;
+void main()
+{
+    FragColor = texture(screenTexture, TexCoord);
+}
+\end{minted}
 
-This approach offers several advantages:
+NEEDS CLARITY ON GPU VS CPU
 
-\begin{itemize}
-    \item Parameter Tuning: Real-time visualization allows for quick iterations when adjusting rendering parameters, as the effects of changes are immediately visible.
-    \item Debugging Aid: It becomes easier to identify and debug issues in the path tracing algorithm as they manifest visually during rendering.
-    \item Progress Monitoring: Users can make informed decisions about when to terminate the rendering based on the current image quality.
-\end{itemize}
-
-\paragraph{Architecture Considerations}
-
-The integration of OpenGL for visualization required careful consideration of the system architecture:
-
-\begin{itemize}
-    \item Separation of Concerns: The core path tracing logic remains separate from the visualization code, maintaining modularity.
-    \item Efficient Data Transfer: The accumulation buffer serves as an intermediate representation, minimizing data transfer between the CPU and GPU. MENTION HOW SLOW IT IS/ CPU PATH TRACING VS
-    \item Flexible Rendering Pipeline: The system is designed to allow easy switching between progressive rendering and traditional batch rendering if needed. CODE HERE?
-\end{itemize}
-
-By leveraging OpenGL for real-time visualization, we've enhanced the path tracer's utility as both a rendering tool and a development aid, providing deeper insights into the rendering process and facilitating more efficient algorithm refinement.
+The advantage here is a CPU Path traced application which utilises the GPU as an intermediate representation. Thus, we do not need to go through the extensive effort of converting our Cpp code to shader code. This has made the Path tracer's development process significantly easier, becoming much easier to identify and debug issues in the path tracing algorithm.
 
 \section{Conclusion}
 \label{sec:conclusion}
