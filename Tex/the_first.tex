@@ -43,7 +43,7 @@ This expository aims to achieve the following objectives:
 
     \item To demonstrate the \textit{visual} impact of Monte Carlo methods in path tracing for realistic light simulation, exploring their impact on image fidelity, convergence rates, and rendering efficiency.
 
-    \item To elucidate the \textit{design} and implementation of a path tracing system, with particular emphasis on acceleration structures like Bounding Volume Hierarchies (BVH), real-time visualisation with OpenGL and adhering to software modelling principles.
+    \item To elucidate the \textit{design} and implementation of a path tracing system, with particular emphasis on adhering to software modelling principles and real-time visualisation with OpenGL.
 \end{enumerate}
 
 Through these objectives, this document seeks to offer a thorough exploration of path tracing, from its mathematical underpinnings to its practical realization in computer graphics, serving as a valuable resource for researchers and practitioners in the field of physically-based rendering.
@@ -583,19 +583,14 @@ To address this, we employ anti-aliasing techniques. One effective method is Sup
 
 SSAA significantly reduces aliasing artifacts, producing more realistic and visually appealing results by blurring the sharp transitions at object boundaries. The significant downside is that SSAA is incredibly expensive to perform, if we want 16xSSAA then our computation time will also 16x.
 
-\section{Acceleration Structures UNFINISHED}
+\section{Acceleration Structures UNFINISHED (ONLY IN CODE)}
 \label{sec:acceleration-structures}
 \subsection{Bounding Volume Hierarchies (BVH)}
 \subsubsection{Overview of BVH}
-An advanced structure for efficient intersection tests.
 \subsubsection{Technical Implementation}
-\begin{itemize}
-    \item \textbf{Efficient Ray-Object Intersection Tests:} Using BVH for faster intersection calculations.
-    \item \textbf{Building and Traversing BVH:} Methods for constructing and navigating BVH structures.
-\end{itemize}
 \subsubsection{Algorithmic Analysis}
-Performance analysis of BVH algorithms for various scene complexities.
 
+\pagebreak
 \section{Monte Carlo Methods for Ray Tracing}
 \label{sec:monte-carlo}
 
@@ -899,6 +894,7 @@ Thus we can conclude that by implementing importance sampling we have decreased 
 These two metrics demonstrate that the Combined PDF Importance Sampling method is not only significantly quicker but also offers huge improvements in image quality.
 It should be stressed here that \textit{both methods ultimately produce the same final image}, it is just that our importance sampling achieves this outcome MUCH faster.
 
+\pagebreak
 \section{Technical Description of the System}
 \label{sec:system-description}
 
@@ -1005,9 +1001,8 @@ Here we find an example of a ray intersecting with an object (specifically a qua
 Notice how with this architecture, with applied SOLID principles, allows us to provide a robust foundation and remain adaptable to future enhancements. An example of this would be implementing a Bounding Volume Hierarchy, for more efficient ray interesections. This could very easily be "slotted" into our existing architechture (which in fact I have done in the programs source code).
 
 \subsection{Utilising OpenGL for Visualising Convergence}
-NEEDS CLARITY ON GPU VS CPU
 
-The final subject I wish to tackle in this paper is a "debug mode" I have added to the path tracer, which was very helpful during its development. The entire path tracer runs on the CPU currently, and thus we have no easy method of quickly rendering to a screen (versus simply writing to an image file). We currently cannot provide any insight into the image's convergence process. To address this limitation, I implemented a progressive rendering system using OpenGL (utilising the GPU), allowing for real-time visualization of the path tracing process.
+The final subject I wish to tackle in this paper is a "debug mode" I have added to the path tracer, which was very helpful during its development. The entire path tracer runs on the CPU currently (much slower than a GPU, but \textit{far} easier to develop), and thus we have no easy method of quickly rendering to a screen (versus simply writing to an image file). We currently cannot provide any insight into the image's gradual convergence process. To address this limitation, I implemented a progressive rendering system using OpenGL (utilising the GPU), allowing for real-time visualization of the path tracing process.
 
 \paragraph{Progressive Rendering} The core of this visualization technique is an accumulation buffer. Instead of directly outputting the final pixel colors after x amounts of samples per pixel, I continuously update an accumulation buffer:
 
@@ -1050,20 +1045,25 @@ void main()
 }
 \end{minted}
 
-NEEDS CLARITY ON GPU VS CPU
-
-The advantage here is a CPU Path traced application which utilises the GPU as an intermediate representation. Thus, we do not need to go through the extensive effort of converting our Cpp code to shader code. This has made the Path tracer's development process significantly easier, becoming much easier to identify and debug issues in the path tracing algorithm.
+The advantage here is that a simple CPU Path traced application is able to utilise the GPU as an intermediate representation. Thus, we do not need to go through the extensive effort of converting our Cpp code to shader code. This has made the Path tracer's development process significantly easier, becoming much easier to identify and debug issues in the path tracing algorithm. One area of consideration is the amount of time to to transfer the data from the CPU to GPU, if we were to do this 100 times a second this would be very very slow and laggy. I found that updating the window once per full viewport render was good enough.
 
 \section{Conclusion}
 \label{sec:conclusion}
 \subsection{Summary of Key Points}
-Monte Carlo methods effectively enhance path tracing and image synthesis, improving quality and efficiency.
+In this report, I tried to lay out the foundations of everything a path tracer is and end up using Monte Carlo methods to simulate realistic lighting in a 3D scene. I hope I have managed to illustrate the effectiveness of this technique and especially in the speed and quality of the rendered images, making the path tracer both computationally efficient and visually realistic.
 
 \subsection{Future Work}
-Future exploration of advanced sampling strategies and optimizations for real-time rendering.
 
-\subsection{Final Thoughts}
-Statistical methods are crucial for high-quality rendering solutions.
+While this work has demonstrated the power of path tracing, there remain many opportunities for further enhancement and exploration, some of which include:
+\begin{itemize}
+    \item Bounding Volume Hierarchies (BVH): While the codebase includes an implementation, this report did not cover BVH in detail. Future work could focus on optimizing BVH construction and traversal to improve performance, essential in scenes with complex geometries.
+
+    \item Support for .obj File Handling: Incorporating functionality for reading and rendering more complex object geometries from .obj files would allow us to make much more diverse scenes.
+
+    \item Transition to GPU Rendering: Migrating the path tracing computations to the GPU could significantly reduce rendering times and enable real-time applications.
+\end{itemize}
+
+In a more general sense, I thoroughly recommend exploring graphics papers (both old and new!), and seeing if you can implement any of the techniquest they talk about. In particular I am a fan of Nvidia's and Pixar's papers. Happy reading!
 
 \section{References}
 \label{sec:references}
@@ -1099,11 +1099,5 @@ Homogeneity:
 The translation vector \( \mathbf{b} \) remains unchanged and doesn’t scale with \( c \), breaking this property as well.
 
 Thus, the translation is an affine transformation, not a linear transformation, because it doesn’t preserve these linearity conditions.
-
-\section{Code Snippets and Pseudocode}
-\label{sec:appendix-code}
-
-\section{Additional Figures and Diagrams}
-\label{sec:appendix-figures}
 
 \end{document}
