@@ -760,8 +760,29 @@ We need two mathematical tools for this:
     \item A method that, when given a biased random direction, tells us how likely it was to be generated (so that we can turn down/up its intensity by how much it'll be sampled)
 \end{enumerate}
 
-We already have the former; pick a random point on the light and send a ray in that direction. However, we need to utilise a probability density function for the latter.
-In statistics, we can utilise the concept of a Probability Density Function (PDF). A PDF, denoted as $p(\omega)$, describes the likelihood of sampling a particular direction $\omega$. For our light-biased sampling strategy, the PDF will have higher values for directions towards the light and lower values elsewhere.
+We already have the former; pick a random point on the light and send a ray in that direction. However, for the latter we need to use a tool from statistics, the Probability Density Function (PDF).
+
+\paragraph{PDFs} To understand Probability Density Functions (PDFs), let's start with a familiar concept: histograms. In the context of path tracing, imagine we create a histogram of the directions of rays bouncing off a surface. This histogram divides the hemisphere above the surface into sections and shows the frequency of rays in each section.
+
+As we increase our sample size (i.e., trace more paths), the frequency in each section grows, but the overall distribution of ray directions becomes more defined. If we normalize the y-axis of our histogram to show the fraction of total rays in each section instead of raw counts, we create a discrete density function:
+
+$$
+    \text{Density of section } i = \frac{\text{Number of rays in section } i}{\text{Total number of rays}}
+$$
+
+To move from this discrete representation to a continuous one, we can consider what happens as we increase the number of sections indefinitely while narrowing their solid angle. In the limit, we arrive at a continuous density function:
+
+$$
+    \text{Density at direction } \omega = \lim_{\Delta \omega \to 0} \frac{\text{Fraction of rays between } \omega \text{ and } \omega + \Delta \omega}{\Delta \omega}
+$$
+
+This continuous density function is our Probability Density Function (PDF). While the probability of a ray having any exact direction is zero (there are infinitely many possible directions), we can use the PDF to find the probability of a ray falling within any range of directions by integrating the PDF over that range:
+
+$$
+    P(\omega_1 \leq \text{direction} \leq \omega_2) = \int_{\omega_1}^{\omega_2} \text{PDF}(\omega) \, d\omega
+$$
+
+In path tracing, PDFs are crucial for importance sampling. They allow us to sample ray directions non-uniformly, focusing on directions that are more likely to contribute significantly to the final image (such as towards light sources), while still maintaining an unbiased estimate by weighting the contributions of these biased samples. For our light-biased sampling strategy, the PDF will have higher values for directions towards the light and lower values elsewhere.
 
 \paragraph{Deriving our Light's PDF}
 
