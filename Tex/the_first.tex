@@ -425,6 +425,29 @@ $MVP = Projection \cdot View \cdot Model $
 
 We will not use the full MVP matrix in our path tracer. However, we have just made the Model Matrix for our objects, and we can use the inverse of the view matrix to transform rays from camera space to world space, then intersect these rays with objects in world space. The projection is handled implicitly by generating rays based on the camera's properties.
 
+\paragraph{Mathematical intuition}
+I described using these matrices to transform an object from a "space" to another "space" and I want to express this properly. The transformations we've discussed can instead be viewed as changes in the coordinate system or "space" in which we represent our objects. Each space is defined by a set of basis vectors, which are the fundamental directions that span that space. When we transform an object from one space to another, we're essentially changing the basis vectors used to describe the object's position and orientation. This added intuition should make understanding a transformed objects intersection code much easier to understand:
+
+Let \(\mathbf{B} = [\mathbf{b}_1, \mathbf{b}_2, \mathbf{b}_3]\) be an orthonormal basis in the object's local space. A ray in world coordinates \(\mathbf{R}(t) = \mathbf{O} + t\mathbf{D}\) can be transformed into this basis using:
+
+\[
+    \mathbf{O}' = \mathbf{B}^{-1} (\mathbf{O} - \mathbf{P})
+\]
+\[
+    \mathbf{D}' = \mathbf{B}^{-1} \mathbf{D}
+\]
+
+where \(\mathbf{P}\) is the object's position in world coordinates. Post intersection, the intersection point and normal can be transformed back into world space by:
+
+\[
+    \mathbf{P}_{\text{world}} = \mathbf{B} \mathbf{P}_{\text{local}} + \mathbf{P}
+\]
+\[
+    \mathbf{N}_{\text{world}} = \mathbf{B} \mathbf{N}_{\text{local}}
+\]
+
+The advantage of this approach is that it allows us to define objects in their own local coordinate system, which is much more intuitive and easier to work with.
+
 \subsection{Color and Shading Models}
 \label{color_shading}
 Having established our scene and implemented the ability to compute intersections between rays and objects, we must find some way to use this information to simulate how light works in the real world. This involves modelling how light behaves upon hitting different surfaces.
@@ -499,7 +522,7 @@ The camera's orientation is specified by the following vectors:
 \[
     \mathbf{w} = \frac{\mathbf{C} - \mathbf{L}}{\|\mathbf{C} - \mathbf{L}\|}
 \]
-where \(\mathbf{C}\) represents the camera's position, and \(\mathbf{L}\) is the focal point or the point the camera is directed towards.
+where \(\mathbf{C}\) represents the camera's position, and \(\mathbf{L}\) is the focal point of our image.
 
 \(\mathbf{u}\): This vector points to the camera's right and is derived from the cross product of the global up vector \(\mathbf{v}_{\text{up}}\) and \(\mathbf{w}\):
 \[
@@ -513,61 +536,55 @@ where \(\mathbf{C}\) represents the camera's position, and \(\mathbf{L}\) is the
 
 These vectors form a right-handed coordinate system, defining the camera's spatial alignment and enabling intuitive manipulation of the camera's orientation in the scene.
 
-\subsection{Perspective Projection}
-We currently have the ability to send rays throughout a 3D scene, but a screen is a 2D plane so we must project our data into it. This is achieved by calculating a viewports dimensions from our camera's basis vectors, alongside pixel information from our applications window (I am using GLFW to manage the window).
+\subsection{Camera Ray Generation}
+We currently have the ability to send rays throughout a 3D scene, but a screen is a 2D plane so we must project our data into it. In path tracing this is achieved by calculating a viewports dimensions from our camera's basis vectors, alongside pixel information from our applications window (I am using the library GLFW to manage the window). As mentioned previously, a different method of doing this is using the Projection matrix (computed from our camera's parameters).
 
-To simulate the projection of rays from the camera through each pixel on the image plane, we calculate the position of each pixel within the camera's local coordinate system. The pixel positions represent rays emanating from the camera through the viewport, defined in terms of the basis vectors \(\mathbf{u}\) and \(\mathbf{v}\).
+To accurately simulate the projection of rays from the camera through each pixel on the image plane, we need to establish a relationship between the camera's properties, the viewport, and the pixels in our final image. Let's break this down step by step:
 
-the viewport dimensions based on the vertical field of view (FOV) and the aspect ratio of the rendered image. The viewport height is computed using the trigonometric relationship:
-\[
-    \text{viewportHeight} = 2 \cdot \tan\left(\frac{\text{vertFOV}}{2}\right) \cdot \text{focalLength}
-\]
+We start with a camera defined by its position $\mathbf{C}$, and orthonormal basis vectors $\mathbf{u}$, $\mathbf{v}$, and $\mathbf{w}$, representing the camera's local coordinate system.
 
-The viewport width is then set according to the aspect ratio:
-\[ \text{viewportWidth} = \text{viewportHeight} \cdot \frac{\text{imageWidth}}{\text{imageHeight}}
-\] By doing this, we maintain the proportions of the scene and prevent distortion in the final rendered image.
+The viewport represents the camera's view of the scene. Its dimensions are determined by the vertical field of view (FOV) and the aspect ratio of the rendered image:
 
-With the basis vectors established, we define the horizontal \text{viewportU} and vertical \text{viewportV} extents of the viewport:
-\[
-    \text{viewportU} = \text{viewportWidth} \cdot \mathbf{u}
-\]
-\[
-    \text{viewportV} = \text{viewportHeight} \cdot \mathbf{v}
-\]
+$$ \text{viewportHeight} = 2 \cdot \tan\left(\frac{\text{vertFOV}}{2}\right) \cdot \text{focalLength}
+    \ $$
+$$ \text{viewportWidth} = \text{viewportHeight} \cdot \frac{\text{imageWidth}}{\text{imageHeight}}
+    \ $$
 
-These vectors represent the physical dimensions of the viewport in the camera's local coordinate system. To calculate the movement from one pixel to the next across the image, we determine the pixel spacing (delta vectors) in both horizontal and vertical directions:
-\[
-    \text{pixelDeltaU} = \frac{\text{viewportU}}{\text{imageWidth}}
-\]
-\[
-    \text{pixelDeltaV} = \frac{\text{viewportV}}{\text{imageHeight}}
-\]
+This ensures that the viewport's proportions match the final image, preventing distortion.
 
-Finally, we determine the position of the top-left corner of the viewport \text{viewportUpperLeft} by offsetting the camera center by the focal length along $\mathbf{w}$ and half the viewport dimensions along $\mathbf{u}$ and $\mathbf{v}$:
-\[
-    \text{viewportUpperLeft} = \mathbf{C} - (\text{focalLength} \cdot \mathbf{w}) - \frac{\text{viewportU}}{2} - \frac{\text{viewportV}}{2}
-\]
+We define vectors representing the viewport's extent in the camera's local coordinate system:
 
-The coordinates for the first pixel (the upper-left corner, \text{pixelTL}) are then calculated by adjusting this position by half a pixel's width and height:
-\[
-    \text{pixelTL} = \text{viewportUpperLeft} + 0.5 \cdot (\text{pixelDeltaU} + \text{pixelDeltaV})
-\]
+$$ \text{viewportU} = \text{viewportWidth} \cdot \mathbf{u}
+    \ $$
+$$ \text{viewportV} = \text{viewportHeight} \cdot \mathbf{v}
+    \ $$
 
-Iterating over the rest of the pixels in the scene is a simple matter of adding multiples of \text{pixelDeltaU} + \text{pixelDeltaV} to the top left pixel.
+To map our image pixels to viewport positions, we calculate the spacing between pixels:
 
-\paragraph{Field Of View} The camera's field of view (FOV) determines how much of the scene is visible through the viewport, affecting the perceived scale and perspective:
+$$ \text{pixelDeltaU} = \frac{\text{viewportU}}{\text{imageWidth}}
+    \ $$
+$$ \text{pixelDeltaV} = \frac{\text{viewportV}}{\text{imageHeight}}
+    \ $$
 
-The vertical field of view (\(\text{vertFov}\)) defines the camera's vertical range:
-\[
-    \text{viewportHeight} = 2 \cdot \tan\left(\frac{\text{vertFov}}{2}\right)
-\]
+We then position the viewport in the camera's local space:
 
-- The viewport width is adjusted based on the aspect ratio (\(\text{aspectRatio}\)):
-\[
-    \text{viewportWidth} = \text{aspectRatio} \cdot \text{viewportHeight}
-\]
+$$ \text{viewportUpperLeft} = \mathbf{C} - (\text{focalLength} \cdot \mathbf{w}) - \frac{\text{viewportU}}{2} - \frac{\text{viewportV}}{2}
+    \ $$
 
-These parameters ensure that the scene is rendered with the correct proportions and perspective, replicating how a real-world camera captures a scene. We can also manipulate the FOV to get some artistic effects:
+This places the viewport at the focal length from the camera, centered in the camera's view.
+
+Finally, we can calculate the position of each pixel in the viewport:
+
+$$ \text{pixelTL} = \text{viewportUpperLeft} + 0.5 \cdot (\text{pixelDeltaU} + \text{pixelDeltaV})
+    \ $$
+
+Other pixels are positioned by adding multiples of $\text{pixelDeltaU}$ and $\text{pixelDeltaV}$ to $\text{pixelTL}$.
+
+By following these steps, we have created a direct mapping between each pixel in our image and a corresponding point in the camera's viewport. The ray direction for each pixel can then be calculated as the vector from the camera position $\mathbf{C}$ to the pixel's position in the viewport.
+
+
+\paragraph{Field Of View} The camera's field of view (FOV) determines how much of the scene is visible through the viewport, affecting the perceived scale and perspective, as scene in our $\text{viewportHeight}$ equation.
+These parameters allow us to replicate how a real-world camera captures a scene, but we can also manipulate the FOV to get some artistic effects:
 
 \begin{figure}[H]
     \centering
@@ -579,9 +596,7 @@ These parameters ensure that the scene is rendered with the correct proportions 
 The geometry of the Cornell box has remained identical, however we have achieved an effective emulation of a "Fish-eye" lens.
 
 \subsection{Camera Aliasing}
-The camera model is fundamental to the ray tracing process, simulating the viewpoint from which the scene is observed. It generates rays from the camera's origin, passing through each pixel on the image plane:
-
-A crucial challenge in rendering involves aliased edges, where a pixel either hits an object or misses it entirely. This binary decision creates jagged edges, as briefly referenced in the aliased interaction in Figure \ref{fig:aliasedintersection}.
+This camera model we just established is fundamental to the ray tracing process. It generates rays from the camera's origin, passing through each pixel on the image plane, and now stores this information on our window. However, lets look closely at an image I generated of two spheres (pink and green) intersecting:
 
 \begin{figure}[H]
     \centering
@@ -590,7 +605,9 @@ A crucial challenge in rendering involves aliased edges, where a pixel either hi
     \label{fig:aliasedintersection}
 \end{figure}
 
-To address this, we employ anti-aliasing techniques. One effective method is Super Sampling Anti-Aliasing (SSAA) , where multiple samples per pixel are taken, and their colors are averaged. By randomly choosing a direction within the pixel, we smooth out the transitions and enhance image quality:
+This does not very spherical to me! A crucial challenge we have in rendering involves aliased edges, in which a pixel's ray either hits an object or misses it entirely. This binary decision creates very jagged edges, as briefly referenced in Figure \ref{fig:raysphereintersection}.
+
+To address this, we employ anti-aliasing techniques. There are many many ways techniques with lots of acronyms (FXAA, SMAA, MSAA, TXAA etc.), but I will tackle Super Sampling Anti-Aliasing (SSAA). SSAA is one of the most effective method, in which \textit{multiple} samples per pixel are taken, and their colors are averaged together. By randomly choosing a direction within the pixel, we manage smooth out the transitions and enhance image quality:
 
 \begin{figure}[H]
     \centering
@@ -599,7 +616,8 @@ To address this, we employ anti-aliasing techniques. One effective method is Sup
     \label{fig:antialiasedintersection}
 \end{figure}
 
-SSAA significantly reduces aliasing artifacts, producing more realistic and visually appealing results by blurring the sharp transitions at object boundaries. The significant downside is that SSAA is incredibly expensive to perform, if we want 16xSSAA then our computation time will also 16x.
+As we can see SSAA significantly reduces aliasing artifacts, producing more realistic and visually appealing results by blurring the sharp transitions at object boundaries.
+This is not a solved issue however, as SSAA is incredibly expensive to perform, if we want to perform 16xSSAA (16 samples per pixel) then our computation time will be proportionally longer (16x longer!). The next section will focus on how we can get more out of each sample we take.
 
 \section{Acceleration Structures UNFINISHED (ONLY IN CODE)}
 \label{sec:acceleration-structures}

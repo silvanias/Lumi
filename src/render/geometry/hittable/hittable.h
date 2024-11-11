@@ -57,11 +57,11 @@ public:
 
     bool hit(const Ray &r, Interval rayT, HitRecord &rec) const override
     {
-        // Ray to object space
+        // Tranfsorm ray to object space
         Ray offsetRay(r.origin() - offset, r.direction());
         if (!object->hit(offsetRay, rayT, rec))
             return false;
-        // Intersection point to world space
+        // Transform Intersection point to world space
         rec.point += offset;
         return true;
     }
