@@ -218,56 +218,29 @@ The following image illustrates a ray-plane intersection:
     \label{fig:rayplaneintersection}
 \end{figure}
 
-In Figure \ref{fig:rayplaneintersection}, we see a ray intersecting a plane (represented as a quad for visualization purposes). The image demonstrates how a ray intersects the plane at a single point. This visual representation helps to understand the mathematical concept described above, where we solve for a single value of \(t\) to find the intersection point.
+In Figure \ref{fig:rayplaneintersection}, you can see all the pixels in whcih a ray has intersected our plane (represented as a quad for visualization purposes).
 
 \subsubsection{Extension to Object Meshes}
 
-Intersection tests can be extended to complex object meshes using triangle intersection algorithms. Intersecting meshes is a crucial step in ray tracing, as most 3D models are represented as meshes composed of triangles.
+You may now be wondering how it is we can represent much more complex objects, with the classic example being the "Stanford Bunny" \cite{stanfordbunny}. The trick is to discretise the model into many small triangles, shown below:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/stanford_bunny.png}
+    \caption{Discretised bunny, taken from: \cite{discretebunny}}
+    \label{fig:discretebunny}
+\end{figure}
 
-\paragraph{Triangle Intersection}
+Intersection tests can be extended to complex object meshes very simply via efficient triangle intersection algorithms. The most common is the Möller–Trumbore algorithm \cite{trumboreintersection}. This algorithm is efficient and doesn't require precomputation of the triangle's plane equation.
 
-UNNECESSARY TO DEMONSTRATE, REMOVE OR IMPROVE
-
-
-The most common method for triangle intersection is the Möller–Trumbore algorithm. This algorithm is efficient and doesn't require precomputation of the triangle plane equation.
-
-Given a ray \(\mathbf{R}(t) = \mathbf{O} + t\mathbf{D}\) and a triangle defined by vertices \(\mathbf{V}0\), \(\mathbf{V}1\), and \(\mathbf{V}_2\), we can express any point on the triangle as:
-
-\[
-    \mathbf{T}(u,v) = (1-u-v)\mathbf{V}0 + u\mathbf{V}1 + v\mathbf{V}_2
-\]
-
-where \(u\) and \(v\) are barycentric coordinates satisfying \(u \geq 0\), \(v \geq 0\), and \(u + v \leq 1\).
-
-The intersection point must satisfy:
-
-\[
-    \mathbf{O} + t\mathbf{D} = (1-u-v)\mathbf{V}0 + u\mathbf{V}1 + v\mathbf{V}_2
-\]
-
-This can be rewritten as a system of linear equations:
-
-\[
-    \begin{bmatrix}
-        -\mathbf{D} & \mathbf{V}1 - \mathbf{V}0 & \mathbf{V}2 - \mathbf{V}0
-    \end{bmatrix}
-    \begin{bmatrix}
-        t \\ u \\ v
-    \end{bmatrix}
-    = \mathbf{O} - \mathbf{V}_0
-\]
-
-Solving this system using Cramer's rule gives us \(t\), \(u\), and \(v\). If \(0 \leq u \leq 1\), \(0 \leq v \leq 1\), \(u + v \leq 1\), and \(t > 0\), then the ray intersects the triangle.
-
-\paragraph{Mesh Intersection}
-
-For a mesh composed of many triangles, we perform the following steps:
+E.g. for a mesh composed of many triangles, we perform the following steps:
 
 For each triangle in the mesh:
-a. Perform the triangle intersection test.
-b. If an intersection is found, store the intersection point and distance.
+\begin{enumerate}
+    \item Perform the triangle intersection test.
+    \item If an intersection is found, store the intersection point and distance.
+\end{enumerate}
 
-After testing all triangles, return the closest intersection point (smallest positive \(t\)).
+After testing all triangles, return the closest intersection point (smallest positive \(t\)). This will be where we will do our bounces from.
 
 \subsection{Placing Objects into the World}
 
@@ -282,7 +255,7 @@ Matrices are fundamental tools in linear algebra that we can use to represent an
     \item \textbf{Scaling}, resizing an object by stretching or compressing it along an axis.
 \end{itemize}
 
-We can then put these operations into mathematical objects that can be easily combined and applied to points and vectors in 3D space (and computed quickly on a GPU).
+We can then put these operations into mathematical objects that can be easily combined and applied to points and vectors in 3D space (and computed quickly on a GPU \cite{gpumatrixmultiplication}).
 
 In our path tracer we can view a point or vector as a column vector (a matrix of N $\times$ 1):
 \[
@@ -389,6 +362,8 @@ Rotating a point around the \(z\)-axis by an angle \(\theta\):
     \end{pmatrix}
 \]
 
+If you are interested in how we can derive these rotation matrices, I have included it in \autoref{sec:appendix-derivations-rotation}.
+
 These transformation matrices can be combined into a single matrix through multiplication, allowing us to apply multiple transformations in one operation. The order of multiplication is important, as matrix multiplication is not commutative. Typically, we combine transformations in the order of scale, then rotate, then translate.
 
 I will demonstrate with an example, scale an object by 2 in all dimensions, rotate it 45° around the y-axis, and then translate it by (1, 2, 3), we would have:
@@ -441,23 +416,14 @@ I need to mention an essential 3D graphics tool here, which will be useful to kn
 
     \item[View Matrix] The view matrix represents the camera's position and orientation in the world. It's essentially the inverse of the camera's transformation matrix, moving the world relative to the camera.
 
-    \item[Projection Matrix] The projection matrix defines how 3D points in camera space are projected onto the 2D screen. For a perspective projection, it might look like this:
-          \[
-              P = \begin{pmatrix}
-                  \frac{1}{\tan(\frac{fov}{2}) \cdot aspect} & 0                             & 0                                & 0                                          \\
-                  0                                          & \frac{1}{\tan(\frac{fov}{2})} & 0                                & 0                                          \\
-                  0                                          & 0                             & \frac{-(far + near)}{far - near} & \frac{-2 \cdot far \cdot near}{far - near} \\
-                  0                                          & 0                             & -1                               & 0
-              \end{pmatrix}
-          \]
-          Where $fov$ is the field of view, $aspect$ is the aspect ratio, and $near$ and $far$ define the view frustum.
+    \item[Projection Matrix] The projection matrix defines how 3D points in camera space are projected onto the 2D screen.
 
 \end{description}
 
 The MVP matrix is the product of these three matrices:
 $MVP = Projection \cdot View \cdot Model $
 
-We will not use the full MVP matrix in our path tracer. However, we can use the inverse of the view matrix to transform rays from camera space to world space and then intersect these rays with objects in world space. The projection is handled implicitly by generating rays based on the camera's properties.
+We will not use the full MVP matrix in our path tracer. However, we have just made the Model Matrix for our objects, and we can use the inverse of the view matrix to transform rays from camera space to world space, then intersect these rays with objects in world space. The projection is handled implicitly by generating rays based on the camera's properties.
 
 \subsection{Color and Shading Models}
 \label{color_shading}
@@ -517,7 +483,7 @@ where \(n\) is the shininess coefficient, determining the sharpness of the refle
     \label{fig:specmat}
 \end{figure}
 
-Notice the bending of the lights in the spheres reflection.
+Notice the bending of the lights in the spheres reflection. This type of image is why path tracers really blow my mind, think about how little we have had to do to arrive at an image which has such realistic lighting!
 
 \section{Camera Dynamics}
 \label{sec:camera}
@@ -624,7 +590,7 @@ A crucial challenge in rendering involves aliased edges, where a pixel either hi
     \label{fig:aliasedintersection}
 \end{figure}
 
-To address this, we employ anti-aliasing techniques. One effective method is Super Sampling Anti-Aliasing (SSAA), where multiple samples per pixel are taken, and their colors are averaged. By randomly choosing a direction within the pixel, we smooth out the transitions and enhance image quality:
+To address this, we employ anti-aliasing techniques. One effective method is Super Sampling Anti-Aliasing (SSAA) , where multiple samples per pixel are taken, and their colors are averaged. By randomly choosing a direction within the pixel, we smooth out the transitions and enhance image quality:
 
 \begin{figure}[H]
     \centering
@@ -882,7 +848,7 @@ As you can see we have now arrived back at an image close to our original before
 
 This does raise the point of why we bothered to go through all the maths to arrive at a very similar looking image. I will take this section to quantitatively demonstrate how much of a speed advantage we have just gained.
 
-\paragraph{PSNR} The first metric I will use to do this is the Peak Signal-to-Noise Ratio (PSNR) which is a standard metric for assessing image quality differences. PSNR is most easily defined via the mean squared error (MSE). Given a noise-free m×n monochrome image I and its noisy approximation K, MSE is defined as:
+\paragraph{PSNR} The first metric I will use to do this is the Peak Signal-to-Noise Ratio (PSNR) which is a standard metric for assessing image quality differences \cite{imagequality}. PSNR is most easily defined via the mean squared error (MSE). Given a noise-free m×n monochrome image I and its noisy approximation K, MSE is defined as:
 \[
     {\displaystyle {\mathit {MSE}}={\frac {1}{m\,n}}\sum _{i=0}^{m-1}\sum _{j=0}^{n-1}[I(i,j)-K(i,j)]^{2}.}
 \]
@@ -892,9 +858,7 @@ The PSNR (in dB) is defined as:
 \]
 Here, $MAX_I$ is the maximum possible pixel value of the image. When the pixels are represented using 8 bits per sample, this is 255. The advantage of using PSNR over MSE is that it is typically more aligned with human perception, as small differences in high dynamic range signals will have a lesser impact on the result. In comparison MSE treats all errors equally, without accounting for perceptual differences.
 
-
-Shown below you can observe the visual difference between the two sampling techniques we covered, with the final image showcasing the pixels that have changed color (shown in red).
-
+Shown below you can observe the visual difference between the two sampling techniques we covered, with the final image showcasing the pixels that have changed color (in red).
 
 \begin{figure}[H]
     \centering
@@ -1106,7 +1070,7 @@ While this work has demonstrated the power of path tracing, there remain many op
 \begin{itemize}
     \item Bounding Volume Hierarchies (BVH): While the codebase includes an implementation, this report did not cover BVH in detail. Future work could focus on optimising BVH construction and traversal to improve performance, essential in scenes with complex geometries.
 
-    \item Support for .obj File Handling: Incorporating functionality for reading and rendering more complex object geometries from .obj files would allow us to make much more diverse scenes.
+    \item Support for .obj File Handling: Incorporating functionality for reading and rendering more complex object geometries from .obj files would allow us to make much more diverse scenes (like the Stanford Bunny \cite{stanfordbunny}!).
 
     \item Transition to GPU Rendering: Migrating the path tracing computations to the GPU could significantly reduce rendering times and enable real-time applications.
 \end{itemize}
@@ -1119,7 +1083,7 @@ In a more general sense, I recommend exploring graphics papers (both old and new
 \bibliography{references}
 
 \appendix
-\section{Detailed Mathematical Derivations}
+\section{Detailed Mathematics}
 \label{sec:appendix-derivations}
 
 \subsection{Linearity of Transformations}
@@ -1147,5 +1111,132 @@ Homogeneity:
 The translation vector \( \mathbf{b} \) remains unchanged and doesn’t scale with \( c \), breaking this property as well.
 
 Thus, the translation is an affine transformation, not a linear transformation, because it doesn’t preserve these linearity conditions.
+
+\subsection{Derivation of Rotation Matrices}
+\label{sec:appendix-derivations-rotation}
+
+To derive rotation matrices, we start by considering rotation in a 2D plane, which forms the basis for 3D rotations. In 3D space, rotation around any axis can be decomposed into rotations in the planes perpendicular to that axis.
+
+\subsubsection{2D Rotation}
+
+Lets consider a point $(x, y)$ in a 2D plane. We can also represent this point in polar coordinates $(x = r \cos\phi, y = r \sin\phi)$.
+
+When rotated counterclockwise by an angle $\theta$ around the origin, its new coordinates $(x', y')$ can be expressed as:
+$$
+    x' = r \cos(\phi + \theta)
+    y' = r \sin(\phi + \theta)
+$$
+We can then use the trigonemtric sum and difference identities to expand:
+
+$$
+    \begin{aligned}
+        x' & = r \cos(\phi + \theta) = r \cos\phi \cos\theta - r \sin\phi \sin\theta = x \cos\theta - y \sin\theta \\
+        y' & = r \sin(\phi + \theta) = r \sin\phi \cos\theta + r \cos\phi \sin\theta = x \sin\theta + y \cos\theta
+    \end{aligned}
+$$
+
+This 2D rotation can now be represented as a matrix:
+
+$$
+    \begin{pmatrix}
+        x' \\ y'
+    \end{pmatrix} =
+    \begin{pmatrix}
+        \cos\theta & -\sin\theta \\
+        \sin\theta & \cos\theta
+    \end{pmatrix}
+    \begin{pmatrix}
+        x \\ y
+    \end{pmatrix}
+$$
+
+\subsubsection{3D Rotations}
+
+Now, we'll extend this concept to 3D rotations around each axis.
+
+When rotating around the x-axis:
+\begin{itemize}
+    \item The x-coordinate remains unchanged.
+    \item The y and z coordinates rotate in the yz-plane.
+\end{itemize}
+
+Applying the 2D rotation to the yz-plane:
+
+$$
+    \begin{aligned}
+        x' & = x                           \\
+        y' & = y \cos\theta - z \sin\theta \\
+        z' & = y \sin\theta + z \cos\theta
+    \end{aligned}
+$$
+
+This yields the matrix $\mathbf{R}_x(\theta)$:
+
+$$
+    \mathbf{R}_x(\theta) = \begin{pmatrix}
+        1 & 0          & 0           & 0 \\
+        0 & \cos\theta & -\sin\theta & 0 \\
+        0 & \sin\theta & \cos\theta  & 0 \\
+        0 & 0          & 0           & 1
+    \end{pmatrix}
+$$
+
+
+For rotation around the y-axis:
+\begin{itemize}
+    \item The y-coordinate remains unchanged.
+    \item The x and z coordinates rotate in the xz-plane.
+\end{itemize}
+
+However, we must be careful here. The positive rotation around the y-axis is defined as counterclockwise when looking down the y-axis from positive to negative. This means in the xz-plane, positive rotation appears clockwise. Therefore, we need to negate the angle in our 2D rotation formula:
+
+$$
+    \begin{aligned}
+        x' & = x \cos(-\theta) - z \sin(-\theta) = x \cos\theta + z \sin\theta  \\
+        y' & = y                                                                \\
+        z' & = x \sin(-\theta) + z \cos(-\theta) = -x \sin\theta + z \cos\theta
+    \end{aligned}
+$$
+
+This gives us the matrix $\mathbf{R}_y(\theta)$:
+
+$$
+    \mathbf{R}_y(\theta) = \begin{pmatrix}
+        \cos\theta  & 0 & \sin\theta & 0 \\
+        0           & 1 & 0          & 0 \\
+        -\sin\theta & 0 & \cos\theta & 0 \\
+        0           & 0 & 0          & 1
+    \end{pmatrix}
+$$
+
+For rotation around the z-axis:
+\begin{itemize}
+    \item The z-coordinate remains unchanged.
+    \item The x and y coordinates rotate in the xy-plane.
+\end{itemize}
+
+This directly applies our 2D rotation:
+
+$$
+    \begin{aligned}
+        x' & = x \cos\theta - y \sin\theta \\
+        y' & = x \sin\theta + y \cos\theta \\
+        z' & = z
+    \end{aligned}
+$$
+
+Resulting in the matrix $\mathbf{R}_z(\theta)$:
+
+$$
+    \mathbf{R}_z(\theta) = \begin{pmatrix}
+        \cos\theta & -\sin\theta & 0 & 0 \\
+        \sin\theta & \cos\theta  & 0 & 0 \\
+        0          & 0           & 1 & 0 \\
+        0          & 0           & 0 & 1
+    \end{pmatrix}
+$$
+
+After going through the 3D rotation matrices step-by-step I find it a lot less scary, at the very least it's quite clear how they emerge from 2D.
+We then of course make the fourth row and column in each matrix all zeros (except for a 1 in the diagonal), which allow these rotations to be combined with other transformations in homogeneous coordinates.
 
 \end{document}
