@@ -288,12 +288,12 @@ In homogeneous coordinates, a point becomes:
 A translation matrix in homogeneous coordinates is:
 
 \[
-    \mathbf{T} = \begin{pmatrix}
+    \mathbf{T} = \begin{bmatrix}
         1 & 0 & 0 & d_x \\
         0 & 1 & 0 & d_y \\
         0 & 0 & 1 & d_z \\
         0 & 0 & 0 & 1   \\
-    \end{pmatrix}
+    \end{bmatrix}
 \]
 
 The transformation is then applied via:
@@ -331,35 +331,35 @@ Rotations in 3D are specified with an angle (in radians) and a rotation axis, wi
 
 Rotating a point around the \(x\)-axis by an angle \(\theta\):
 \[
-    \mathbf{R}_x(\theta) = \begin{pmatrix}
+    \mathbf{R}_x(\theta) = \begin{bmatrix}
         1 & 0           & 0            & 0 \\
         0 & \cos \theta & -\sin \theta & 0 \\
         0 & \sin \theta & \cos \theta  & 0 \\
         0 & 0           & 0            & 1 \\
-    \end{pmatrix}
+    \end{bmatrix}
 \]
 
 \paragraph{Rotation Around the Y-axis}
 Rotating a point around the \(y\)-axis by an angle \(\theta\):
 \[
-    \mathbf{R}_y(\theta) = \begin{pmatrix}
+    \mathbf{R}_y(\theta) = \begin{bmatrix}
         \cos \theta  & 0 & \sin \theta & 0 \\
         0            & 1 & 0           & 0 \\
         -\sin \theta & 0 & \cos \theta & 0 \\
         0            & 0 & 0           & 1 \\
-    \end{pmatrix}
+    \end{bmatrix}
 \]
 
 \paragraph{Rotation Around the Z-axis}
 
 Rotating a point around the \(z\)-axis by an angle \(\theta\):
 \[
-    \mathbf{R}_z(\theta) = \begin{pmatrix}
+    \mathbf{R}_z(\theta) = \begin{bmatrix}
         \cos \theta & -\sin \theta & 0 & 0 \\
         \sin \theta & \cos \theta  & 0 & 0 \\
         0           & 0            & 1 & 0 \\
         0           & 0            & 0 & 1 \\
-    \end{pmatrix}
+    \end{bmatrix}
 \]
 
 If you are interested in how we can derive these rotation matrices, I have included it in \autoref{sec:appendix-derivations-rotation}.
@@ -370,32 +370,32 @@ I will demonstrate with an example, scale an object by 2 in all dimensions, rota
 
 \[
     \mathbf{M} =
-    \begin{pmatrix}
+    \begin{bmatrix}
         1 & 0 & 0 & 1 \\
         0 & 1 & 0 & 2 \\
         0 & 0 & 1 & 3 \\
         0 & 0 & 0 & 1
-    \end{pmatrix} \cdot
-    \begin{pmatrix}
+    \end{bmatrix} \cdot
+    \begin{bmatrix}
         \cos 45°  & 0 & \sin 45° & 0 \\
         0         & 1 & 0        & 0 \\
         -\sin 45° & 0 & \cos 45° & 0 \\
         0         & 0 & 0        & 1
-    \end{pmatrix} \cdot
-    \begin{pmatrix}
+    \end{bmatrix} \cdot
+    \begin{bmatrix}
         2 & 0 & 0 & 0 \\
         0 & 2 & 0 & 0 \\
         0 & 0 & 2 & 0 \\
         0 & 0 & 0 & 1
-    \end{pmatrix}
+    \end{bmatrix}
 \]
 \[
-    \mathbf{M} = \begin{pmatrix}
+    \mathbf{M} = \begin{bmatrix}
         1.41  & 0 & 1.41 & 1 \\
         0     & 2 & 0    & 2 \\
         -1.41 & 0 & 1.41 & 3 \\
         0     & 0 & 0    & 1
-    \end{pmatrix}
+    \end{bmatrix}
 \]
 
 This combined matrix $\mathbf{M}$ can then be applied to all points in our object to achieve the desired transformation in a single step.
@@ -1158,12 +1158,14 @@ To derive rotation matrices, we start by considering rotation in a 2D plane, whi
 
 \subsubsection{2D Rotation}
 
-Lets consider a point $(x, y)$ in a 2D plane. We can also represent this point in polar coordinates $(x = r \cos\phi, y = r \sin\phi)$.
+Lets consider a point $(x, y)$ in a 2D plane. We can also represent this point in polar coordinates $(x = r \cos\phi,  y = r \sin\phi)$.
 
 When rotated counterclockwise by an angle $\theta$ around the origin, its new coordinates $(x', y')$ can be expressed as:
 $$
-    x' = r \cos(\phi + \theta)
-    y' = r \sin(\phi + \theta)
+    \begin{aligned}
+        x' = r \cos(\phi + \theta) \\
+        y' = r \sin(\phi + \theta)
+    \end{aligned}
 $$
 We can then use the trigonemtric sum and difference identities to expand:
 
@@ -1180,10 +1182,10 @@ $$
     \begin{pmatrix}
         x' \\ y'
     \end{pmatrix} =
-    \begin{pmatrix}
+    \begin{bmatrix}
         \cos\theta & -\sin\theta \\
         \sin\theta & \cos\theta
-    \end{pmatrix}
+    \end{bmatrix}
     \begin{pmatrix}
         x \\ y
     \end{pmatrix}
@@ -1193,7 +1195,7 @@ $$
 
 Now, we'll extend this concept to 3D rotations around each axis.
 
-When rotating around the x-axis:
+\paragraph{X-Axis} When rotating around the x-axis:
 \begin{itemize}
     \item The x-coordinate remains unchanged.
     \item The y and z coordinates rotate in the yz-plane.
@@ -1212,16 +1214,16 @@ $$
 This yields the matrix $\mathbf{R}_x(\theta)$:
 
 $$
-    \mathbf{R}_x(\theta) = \begin{pmatrix}
+    \mathbf{R}_x(\theta) = \begin{bmatrix}
         1 & 0          & 0           & 0 \\
         0 & \cos\theta & -\sin\theta & 0 \\
         0 & \sin\theta & \cos\theta  & 0 \\
         0 & 0          & 0           & 1
-    \end{pmatrix}
+    \end{bmatrix}
 $$
 
 
-For rotation around the y-axis:
+\paragraph{Y-Axis} For rotation around the y-axis:
 \begin{itemize}
     \item The y-coordinate remains unchanged.
     \item The x and z coordinates rotate in the xz-plane.
@@ -1240,15 +1242,15 @@ $$
 This gives us the matrix $\mathbf{R}_y(\theta)$:
 
 $$
-    \mathbf{R}_y(\theta) = \begin{pmatrix}
+    \mathbf{R}_y(\theta) = \begin{bmatrix}
         \cos\theta  & 0 & \sin\theta & 0 \\
         0           & 1 & 0          & 0 \\
         -\sin\theta & 0 & \cos\theta & 0 \\
         0           & 0 & 0          & 1
-    \end{pmatrix}
+    \end{bmatrix}
 $$
 
-For rotation around the z-axis:
+\paragraph{Z-Axis} For rotation around the z-axis:
 \begin{itemize}
     \item The z-coordinate remains unchanged.
     \item The x and y coordinates rotate in the xy-plane.
@@ -1267,12 +1269,12 @@ $$
 Resulting in the matrix $\mathbf{R}_z(\theta)$:
 
 $$
-    \mathbf{R}_z(\theta) = \begin{pmatrix}
+    \mathbf{R}_z(\theta) = \begin{bmatrix}
         \cos\theta & -\sin\theta & 0 & 0 \\
         \sin\theta & \cos\theta  & 0 & 0 \\
         0          & 0           & 1 & 0 \\
         0          & 0           & 0 & 1
-    \end{pmatrix}
+    \end{bmatrix}
 $$
 
 After going through the 3D rotation matrices step-by-step I find it a lot less scary, at the very least it's quite clear how they emerge from 2D.
